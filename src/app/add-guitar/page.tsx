@@ -12,7 +12,7 @@ type Guitar = {
   strings: string;
   condition: string;
   price: string;
-  imageUrl?: string; // Optional image URL for the guitar
+  imageUrl?: string;
 };
 
 export default function AddGuitar() {
@@ -146,11 +146,9 @@ export default function AddGuitar() {
         return;
       }
       
-      // In a real app, we would upload the image to a server and get back a URL
-      // For this demo, we'll use the image preview URL directly (or a placeholder if no image)
       const imageUrl = imagePreview || '/guitar-placeholder.png';
       
-      // Generate a unique ID (in a real app, this would be done by the backend)
+      // Generate a unique ID
       const newGuitar: Guitar = {
         id: `guitar_${Date.now()}`,
         ...formData,
@@ -192,8 +190,8 @@ export default function AddGuitar() {
           <Image 
             src="/guitar-icon.png" 
             alt="StringTracker Logo" 
-            width={32}
-            height={32}
+            width={52}
+            height={52}
             className="mr-2"
           />
         </Link>
@@ -371,7 +369,7 @@ export default function AddGuitar() {
             </button>
           </form>
           
-          {/* Display added guitars (for demo purposes) */}
+          {/* Display added guitars*/}
           {guitars.length > 0 && (
             <div className="mt-8">
               <h3 className="text-xl font-semibold mb-4">Recently Added Guitars</h3>
@@ -416,13 +414,13 @@ export default function AddGuitar() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-4 px-6 flex justify-between items-center bg-white">
+      <footer className="border-t py-3 px-6 flex justify-between items-center bg-white">
         <div className="flex items-center">
           <Image 
             src="/guitar-icon.png" 
             alt="StringTracker Logo" 
-            width={32}
-            height={32}
+            width={52}
+            height={52}
             className="mr-2"
           />
         </div>

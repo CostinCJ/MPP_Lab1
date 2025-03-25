@@ -10,8 +10,8 @@ export default function Home() {
           <Image 
             src="/guitar-icon.png" 
             alt="StringTracker Logo" 
-            width={32}
-            height={32}
+            width={52}
+            height={52}
             className="mr-2"
           />
         </Link>
@@ -67,7 +67,7 @@ export default function Home() {
         </div>
 
         {/* Features Section */}
-        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-8 my-8">
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-8 my-5">
           {/* Feature 1 */}
           <div className="flex flex-col items-center">
             <div className="rounded-full bg-gray-100 p-4 mb-4">
@@ -110,13 +110,13 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-4 px-6 flex justify-between items-center bg-white">
+      <footer className="border-t py-3 px-6 flex justify-between items-center bg-white">
         <div className="flex items-center">
           <Image 
             src="/guitar-icon.png" 
             alt="StringTracker Logo" 
-            width={32}
-            height={32}
+            width={52}
+            height={52}
             className="mr-2"
           />
         </div>
