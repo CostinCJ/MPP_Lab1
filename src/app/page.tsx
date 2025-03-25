@@ -66,7 +66,6 @@ export default function Home() {
           />
         </div>
         <main className="flex-grow flex flex-col items-center px-4 bg-white">
-          {/* Features Section with added bottom margin */}
           <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-8 my-5 mb-20"> 
             {/* Feature 1 */}
               <div className="flex flex-col items-center">
