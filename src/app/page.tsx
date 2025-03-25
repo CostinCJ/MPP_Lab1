@@ -3,56 +3,66 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white text-black">
       {/* Navigation Bar */}
       <nav className="flex justify-between items-center px-4 py-3 border-b">
         <Link href="/" className="flex items-center">
           <Image 
             src="/guitar-icon.png" 
             alt="StringTracker Logo" 
-            width={30} 
-            height={30}
+            width={32}
+            height={32}
             className="mr-2"
           />
         </Link>
-        <div className="flex space-x-4">
-          <Link href="/all-guitars" className="hover:underline">All Guitars</Link>
-          <Link href="/add-guitar" className="hover:underline">Add Guitar</Link>
-          <Link href="/update-guitar" className="hover:underline">Update Guitar</Link>
-          <Link href="/delete-guitar" className="hover:underline">Delete Guitar</Link>
-        </div>
-        <div className="flex space-x-2">
-          <Link 
-            href="/signin" 
-            className="px-3 py-1 rounded hover:bg-gray-100 border border-gray-300"
-          >
-            Sign in
-          </Link>
-          <Link 
-            href="/register" 
-            className="px-3 py-1 rounded bg-gray-800 text-white hover:bg-gray-700"
-          >
-            Register
-          </Link>
+        
+        <div className="flex items-center">
+          <div className="flex items-center space-x-6 mr-8">
+            <Link 
+              href="/all-guitars" 
+              className="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800"
+            >
+              All Guitars
+            </Link>
+            <Link href="/add-guitar" className="px-3 py-1 hover:underline">Add Guitar</Link>
+            <Link href="/update-guitar" className="px-3 py-1 hover:underline">Update Guitar</Link>
+            <Link href="/delete-guitar" className="px-3 py-1 hover:underline">Delete Guitar</Link>
+          </div>
+          
+          <div className="flex space-x-3">
+            <Link 
+              href="/signin" 
+              className="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800"
+            >
+              Sign in
+            </Link>
+            <Link 
+              href="/register" 
+              className="px-3 py-1 rounded-lg bg-black text-white hover:bg-gray-900 !text-white"
+            >
+              Register
+            </Link>
+          </div>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="flex-grow flex flex-col items-center px-4">
+      {/* Main Content with light background */}
+      <main className="flex-grow flex flex-col items-center px-4 bg-white">
         {/* Header Section */}
-        <div className="text-center my-12">
-          <h1 className="text-5xl font-bold mb-2">StringTracker</h1>
-          <h2 className="text-xl">Guitar Inventory System</h2>
+        <div className="text-center my-22">
+          <h1 className="text-5xl font-bold mb-2 text-black">StringTracker</h1>
+          <h2 className="text-xl text-gray-800">Guitar Inventory System</h2>
         </div>
 
         {/* Hero Image */}
         <div className="w-full max-w-3xl mb-12">
           <Image 
             src="/guitar-collection.png" 
-            alt="Guitar Collection" 
-            width={1200} 
+            alt="Guitar Collection"
+            width={1200}
             height={600}
             className="rounded-lg shadow-md w-full"
+            priority
           />
         </div>
 
@@ -100,19 +110,24 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-4 px-6 flex justify-between items-center">
+      <footer className="border-t py-4 px-6 flex justify-between items-center bg-white">
         <div className="flex items-center">
           <Image 
             src="/guitar-icon.png" 
             alt="StringTracker Logo" 
-            width={30} 
-            height={30}
+            width={32}
+            height={32}
             className="mr-2"
           />
         </div>
-        <div className="flex space-x-4">
-          <Link href="/about" className="text-sm hover:underline">About Us</Link>
-          <Link href="/contact" className="text-sm hover:underline bg-gray-800 text-white px-3 py-1 rounded">Contact Us</Link>
+        <div className="flex items-center space-x-4">
+          <Link href="/about" className="text-sm hover:underline px-3 py-1">About Us</Link>
+          <Link 
+            href="/contact" 
+            className="text-sm hover:underline bg-gray-800 text-white px-3 py-1 rounded-lg !text-white"
+          >
+            Contact Us
+          </Link>
         </div>
       </footer>
     </div>
