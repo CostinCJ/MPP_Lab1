@@ -7,7 +7,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AllGuitars from './page';
 
-// Mock Next.js components
+// Mock components
 jest.mock('next/image', () => {
   return {
     __esModule: true,
@@ -36,7 +36,7 @@ describe('AllGuitars Component', () => {
     expect(screen.getByText('String Type')).toBeInTheDocument();
     expect(screen.getByText('Price')).toBeInTheDocument();
     
-    // Check guitar cards - should find at least some of the default guitars
+    // Check guitar cards
     expect(screen.getByText(/Fender Stratocaster/i)).toBeInTheDocument();
     expect(screen.getByText(/Gibson SG/i)).toBeInTheDocument();
     
@@ -121,8 +121,6 @@ describe('AllGuitars Component', () => {
     // Check that the button is now active
     expect(ascButton).toHaveClass('bg-gray-200');
     
-    // This is harder to test definitively without querying the DOM structure
-    // But we can check that the ascending button has the active class and descending doesn't
     const descButton = screen.getByRole('button', { name: /Price descending/i });
     expect(descButton).not.toHaveClass('bg-gray-200');
   });
@@ -137,8 +135,6 @@ describe('AllGuitars Component', () => {
     // Check that the button is now active
     expect(descButton).toHaveClass('bg-gray-200');
     
-    // This is harder to test definitively without querying the DOM structure
-    // But we can check that the descending button has the active class and ascending doesn't
     const ascButton = screen.getByRole('button', { name: /Price ascending/i });
     expect(ascButton).not.toHaveClass('bg-gray-200');
   });
