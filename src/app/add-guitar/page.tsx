@@ -71,35 +71,40 @@ export default function AddGuitar() {
     const file = e.target.files?.[0];
     
     if (file) {
-      // Check if file is an image
-      if (!file.type.startsWith('image/')) {
-        setImageError(true);
-        setImagePreview(null);
-        setImageSelected(false);
-        return;
-      }
-      
-      // Check file size (limit to 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setImageError(true);
-        setImagePreview(null);
-        setImageSelected(false);
-        return;
-      }
-      
-      setImageError(false);
-      setImageSelected(true);
-      
-      // Create a preview URL for the image
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setImagePreview(null);
-      setImageSelected(false);
-    }
+        setImageSelected(true);
+
+        // Check if file is an image
+        if (!file.type.startsWith('image/')) {
+            setImageError(true);
+            setImagePreview(null);
+            return;
+        }
+        
+        // Check file size (limit to 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setImageError(true);
+            setImagePreview(null);
+            return;
+        }
+        
+        setImageError(false);
+
+        setErrors(prevErrors => ({
+            ...prevErrors,
+            image: false  // Clear the error state for the image
+        }));
+        
+        // Create a preview URL for the image
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+        } else {
+            setImagePreview(null);
+            setImageSelected(false);
+            setImageError(false);
+        }
   };
 
   // Validate form data
@@ -354,9 +359,13 @@ export default function AddGuitar() {
                 accept="image/*"
                 onChange={handleImageUpload}
                 className={`w-full px-3 py-2 border rounded ${errors.image ? 'border-red-500' : 'border-gray-300'}`}
-              />
-                {errors.image && !imageSelected && <p className="text-red-500 text-sm mt-1">Please select an image for the guitar</p>}
-                {errors.image && imageSelected && <p className="text-red-500 text-sm mt-1">Please upload a valid image (max 5MB)</p>}
+            />
+            {!imageSelected && errors.image && (
+                <p className="text-red-500 text-sm mt-1">Please select an image for the guitar</p>
+            )}
+            {imageSelected && imageError && (
+                <p className="text-red-500 text-sm mt-1">Please upload a valid image (max 5MB)</p>
+            )}
 
               
               {/* Image Preview */}
@@ -375,8 +384,6 @@ export default function AddGuitar() {
                 </div>
               )}
             </div>
-            
-            setImageSelected(false);
 
             <button type="submit" className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors">
               Add Guitar
