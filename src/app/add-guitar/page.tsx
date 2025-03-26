@@ -38,6 +38,7 @@ export default function AddGuitar() {
     strings: false,
     condition: false,
     price: false,
+    image: false,
   });
 
   // State for guitars (simulating in-memory database)
@@ -46,6 +47,9 @@ export default function AddGuitar() {
   // State for form submission status
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [duplicateError, setDuplicateError] = useState(false);
+
+  // State for image upload
+    const [imageSelected, setImageSelected] = useState(false);
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -71,6 +75,7 @@ export default function AddGuitar() {
       if (!file.type.startsWith('image/')) {
         setImageError(true);
         setImagePreview(null);
+        setImageSelected(false);
         return;
       }
       
@@ -78,10 +83,12 @@ export default function AddGuitar() {
       if (file.size > 5 * 1024 * 1024) {
         setImageError(true);
         setImagePreview(null);
+        setImageSelected(false);
         return;
       }
       
       setImageError(false);
+      setImageSelected(true);
       
       // Create a preview URL for the image
       const reader = new FileReader();
@@ -91,6 +98,7 @@ export default function AddGuitar() {
       reader.readAsDataURL(file);
     } else {
       setImagePreview(null);
+      setImageSelected(false);
     }
   };
 
@@ -100,13 +108,12 @@ export default function AddGuitar() {
       name: formData.name.trim() === '',
       manufacturer: formData.manufacturer.trim() === '',
       type: formData.type.trim() === '',
-      strings: formData.strings.trim() === '' || 
-               isNaN(Number(formData.strings)) || 
-               Number(formData.strings) <= 0,
+      strings: formData.strings === '', 
       condition: formData.condition.trim() === '',
       price: formData.price.trim() === '' || 
              isNaN(Number(formData.price.replace(/[^\d.-]/g, ''))) || 
              Number(formData.price.replace(/[^\d.-]/g, '')) <= 0,
+      image: imageError || !imageSelected,
     };
     
     setErrors(newErrors);
@@ -291,17 +298,20 @@ export default function AddGuitar() {
             </div>
             
             <div className="mb-4">
-              <label htmlFor="strings" className="block mb-2">Strings</label>
-              <input
-                type="text"
-                id="strings"
-                name="strings"
-                placeholder="String Number"
-                value={formData.strings}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.strings ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.strings && <p className="text-red-500 text-sm mt-1">Enter a valid positive number of strings</p>}
+                <label htmlFor="strings" className="block mb-2">Strings</label>
+                <select
+                    id="strings"
+                    name="strings"
+                    value={formData.strings}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 border rounded ${errors.strings ? 'border-red-500' : 'border-gray-300'}`}
+                >
+                    <option value="">Select number of strings</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="12">12</option>
+                </select>
+                {errors.strings && <p className="text-red-500 text-sm mt-1">Please select number of strings</p>}
             </div>
             
             <div className="mb-4">
@@ -343,9 +353,11 @@ export default function AddGuitar() {
                 name="image"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                className={`w-full px-3 py-2 border rounded ${errors.image ? 'border-red-500' : 'border-gray-300'}`}
               />
-              {imageError && <p className="text-red-500 text-sm mt-1">Please upload a valid image (max 5MB)</p>}
+                {errors.image && !imageSelected && <p className="text-red-500 text-sm mt-1">Please select an image for the guitar</p>}
+                {errors.image && imageSelected && <p className="text-red-500 text-sm mt-1">Please upload a valid image (max 5MB)</p>}
+
               
               {/* Image Preview */}
               {imagePreview && (
@@ -364,6 +376,8 @@ export default function AddGuitar() {
               )}
             </div>
             
+            setImageSelected(false);
+
             <button type="submit" className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors">
               Add Guitar
             </button>
