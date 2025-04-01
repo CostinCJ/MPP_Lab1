@@ -6,6 +6,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AllGuitars from './page';
+import { GuitarProvider } from '../context/GuitarContext';
 
 // Mock components
 jest.mock('next/image', () => {
@@ -27,7 +28,11 @@ jest.mock('next/link', () => ({
 
 describe('AllGuitars Component', () => {
   test('renders the guitar listing page with filters and guitars', () => {
-    render(<AllGuitars />);
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
     
     // Check filter sections
     expect(screen.getByText('Guitar Type')).toBeInTheDocument();
@@ -47,7 +52,11 @@ describe('AllGuitars Component', () => {
   });
 
   test('filters guitars by manufacturer', async () => {
-    render(<AllGuitars />);
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
     
     // Initially, all guitars should be visible
     expect(screen.getByText(/Fender Stratocaster/i)).toBeInTheDocument();
@@ -70,7 +79,11 @@ describe('AllGuitars Component', () => {
   });
 
   test('filters guitars by condition', async () => {
-    render(<AllGuitars />);
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
     
     // Initially, all guitars should be visible
     expect(screen.getAllByText(/Condition: New/i).length).toBeGreaterThan(0);
@@ -93,7 +106,11 @@ describe('AllGuitars Component', () => {
   });
 
   test('searches guitars by name', async () => {
-    render(<AllGuitars />);
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
     
     // Initially, all guitars should be visible
     expect(screen.getByText(/Fender Stratocaster/i)).toBeInTheDocument();
@@ -112,7 +129,11 @@ describe('AllGuitars Component', () => {
   });
 
   test('sorts guitars by price ascending', async () => {
-    render(<AllGuitars />);
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
     
     // Click on price ascending
     const ascButton = screen.getByRole('button', { name: /Price ascending/i });
@@ -126,7 +147,11 @@ describe('AllGuitars Component', () => {
   });
 
   test('sorts guitars by price descending', async () => {
-    render(<AllGuitars />);
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
     
     // Click on price descending
     const descButton = screen.getByRole('button', { name: /Price descending/i });
@@ -140,7 +165,11 @@ describe('AllGuitars Component', () => {
   });
 
   test('displays no guitars message when no matches are found', async () => {
-    render(<AllGuitars />);
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
     
     // Search for something that doesn't exist
     const searchInput = screen.getByPlaceholderText('Search');
@@ -153,7 +182,11 @@ describe('AllGuitars Component', () => {
   });
 
   test('filters guitars by price range', async () => {
-    render(<AllGuitars />);
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
     
     // Initially, all guitars should be visible
     expect(screen.getByText(/Fender Stratocaster/i)).toBeInTheDocument();

@@ -281,7 +281,7 @@ export default function AddGuitar() {
             </div>
             
             <div className="mb-4">
-              <label htmlFor="Type" className="block mb-2">Type</label>
+              <label htmlFor="type" className="block mb-2">Type</label>
               <select
                 id="type"
                 name="type"

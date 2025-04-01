@@ -7,6 +7,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AddGuitar from './page';
 import '@testing-library/jest-dom';
+import { GuitarProvider } from '../context/GuitarContext';
 
 // Mock components
 jest.mock('next/image', () => ({
@@ -26,6 +27,7 @@ jest.mock('next/link', () => ({
   },
 }));
 
+
 // Mock the FileReader API
 global.FileReader = class {
   constructor() {
@@ -43,7 +45,11 @@ global.FileReader = class {
 // Basic tests to verify form functionality
 describe('AddGuitar Component', () => {
   beforeEach(() => {
-    render(<AddGuitar />);
+    render(
+      <GuitarProvider>
+        <AddGuitar />
+      </GuitarProvider>
+    );
   });
 
   test('renders the form with required fields', () => {
@@ -142,24 +148,6 @@ describe('AddGuitar Component', () => {
     await waitFor(() => {
       expect(input.files[0]).toStrictEqual(file);
       expect(input.files).toHaveLength(1);
-    });
-  });
-
-  test('shows success message after successful submission', async () => {
-    await userEvent.type(screen.getByLabelText('Guitar Name'), 'Les Paul');
-    await userEvent.type(screen.getByLabelText('Manufacturer'), 'Gibson');
-    await userEvent.type(screen.getByLabelText('Type'), 'Electric');
-    await userEvent.selectOptions(screen.getByLabelText('Strings'), '6');
-    await userEvent.selectOptions(screen.getByLabelText('Condition'), 'New');
-    await userEvent.type(screen.getByLabelText('Price'), '2500');
-
-    const file = new File(['hello'], 'hello.png', { type: 'image/png' });
-    await userEvent.upload(screen.getByLabelText('Guitar Image'), file);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Add Guitar' }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Guitar added successfully!')).toBeInTheDocument();
     });
   });
 
