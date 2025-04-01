@@ -187,7 +187,6 @@ export default function DeleteGuitar() {
   const handleConfirmDelete = () => {
     if (!selectedGuitar) return;
     
-    // In a real app, this would make an API call to delete the guitar
     console.log(`Deleting guitar: ${selectedGuitar.manufacturer} ${selectedGuitar.name}`);
     
     // Remove the guitar from the guitars array

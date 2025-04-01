@@ -226,8 +226,6 @@ export default function UpdateGuitar() {
         ...formData,
         imageUrl: imagePreview || selectedGuitar.imageUrl,
       };
-      
-      // In a real app, this would call an API to update the guitar
       console.log('Updating guitar:', updatedGuitar);
       
       // Update the guitar in the guitars array
