@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useGuitars } from '../context/GuitarContext';
 
 type Guitar = {
   id: string;
@@ -16,69 +17,8 @@ type Guitar = {
 };
 
 export default function DeleteGuitar() {
-  // Sample guitar data
-  const [guitars, setGuitars] = useState<Guitar[]>([
-    {
-      id: 'fender_strat_1',
-      name: 'Stratocaster',
-      manufacturer: 'Fender',
-      type: 'Electric',
-      strings: '6',
-      condition: 'New',
-      price: '733',
-      imageUrl: '/fenderStratocaster.jpg'
-    },
-    {
-      id: 'ibanez_gio_1',
-      name: 'Gio',
-      manufacturer: 'Ibanez',
-      type: 'Electric',
-      strings: '6',
-      condition: 'Used',
-      price: '269',
-      imageUrl: '/ibanezGio.jpg'
-    },
-    {
-      id: 'gibson_sg_1',
-      name: 'SG',
-      manufacturer: 'Gibson',
-      type: 'Electric',
-      strings: '6',
-      condition: 'New',
-      price: '1526',
-      imageUrl: '/gibsonSG.jpg'
-    },
-    {
-      id: 'gibson_lp_1',
-      name: 'Les Paul \'60s',
-      manufacturer: 'Gibson',
-      type: 'Electric',
-      strings: '6',
-      condition: 'Vintage',
-      price: '2499',
-      imageUrl: '/gibsonLesPaul60.jpg'
-    },
-    {
-      id: 'fender_squier_1',
-      name: 'Squier',
-      manufacturer: 'Fender',
-      type: 'Electric',
-      strings: '6',
-      condition: 'Used',
-      price: '115',
-      imageUrl: '/fenderSquire.jpg'
-    },
-    {
-      id: 'ibanez_grg_1',
-      name: 'GRG170DX',
-      manufacturer: 'Ibanez',
-      type: 'Electric',
-      strings: '6',
-      condition: 'New',
-      price: '287',
-      imageUrl: '/ibanezGRGW.jpg'
-    }
-  ]);
+  // Use guitars and deleteGuitar from context instead of local state
+  const { guitars, deleteGuitar } = useGuitars();
 
   // State for search
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,10 +127,8 @@ export default function DeleteGuitar() {
   const handleConfirmDelete = () => {
     if (!selectedGuitar) return;
     
-    console.log(`Deleting guitar: ${selectedGuitar.manufacturer} ${selectedGuitar.name}`);
-    
     // Remove the guitar from the guitars array
-    setGuitars(prevGuitars => prevGuitars.filter(guitar => guitar.id !== selectedGuitar.id));
+    deleteGuitar(selectedGuitar.id);
     
     // Show success message
     setDeleteSuccess(true);

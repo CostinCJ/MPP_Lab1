@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useGuitars } from '../context/GuitarContext';
 
 type Guitar = {
   id: string;
@@ -16,69 +17,7 @@ type Guitar = {
 };
 
 export default function UpdateGuitar() {
-  // Sample guitar data
-  const [guitars, setGuitars] = useState<Guitar[]>([
-    {
-      id: 'fender_strat_1',
-      name: 'Stratocaster',
-      manufacturer: 'Fender',
-      type: 'Electric',
-      strings: '6',
-      condition: 'New',
-      price: '733',
-      imageUrl: '/fenderStratocaster.jpg'
-    },
-    {
-      id: 'ibanez_gio_1',
-      name: 'Gio',
-      manufacturer: 'Ibanez',
-      type: 'Electric',
-      strings: '6',
-      condition: 'Used',
-      price: '269',
-      imageUrl: '/ibanezGio.jpg'
-    },
-    {
-      id: 'gibson_sg_1',
-      name: 'SG',
-      manufacturer: 'Gibson',
-      type: 'Electric',
-      strings: '6',
-      condition: 'New',
-      price: '1526',
-      imageUrl: '/gibsonSG.jpg'
-    },
-    {
-      id: 'gibson_lp_1',
-      name: 'Les Paul \'60s',
-      manufacturer: 'Gibson',
-      type: 'Electric',
-      strings: '6',
-      condition: 'Vintage',
-      price: '2499',
-      imageUrl: '/gibsonLesPaul60.jpg'
-    },
-    {
-      id: 'fender_squier_1',
-      name: 'Squier',
-      manufacturer: 'Fender',
-      type: 'Electric',
-      strings: '6',
-      condition: 'Used',
-      price: '115',
-      imageUrl: '/fenderSquire.jpg'
-    },
-    {
-      id: 'ibanez_grg_1',
-      name: 'GRG170DX',
-      manufacturer: 'Ibanez',
-      type: 'Electric',
-      strings: '6',
-      condition: 'New',
-      price: '287',
-      imageUrl: '/ibanezGRGW.jpg'
-    }
-  ]);
+  const { guitars, updateGuitar } = useGuitars();
   
   // State for search and form display
   const [searchQuery, setSearchQuery] = useState('');
@@ -226,21 +165,18 @@ export default function UpdateGuitar() {
         ...formData,
         imageUrl: imagePreview || selectedGuitar.imageUrl,
       };
-      console.log('Updating guitar:', updatedGuitar);
       
       // Update the guitar in the guitars array
-      const updatedGuitars = guitars.map(guitar => 
-        guitar.id === selectedGuitar.id ? updatedGuitar : guitar
-      );
+      updateGuitar(selectedGuitar.id, updatedGuitar);
       
       // Update the state with the new guitars array
-      setGuitars(updatedGuitars);
-      
-      // Update the selected guitar to reflect changes
-      setSelectedGuitar(updatedGuitar);
+      setSelectedGuitar({
+        ...selectedGuitar,
+        ...updatedGuitar
+      });
       
       // Update search query to reflect potential name changes
-      setSearchQuery(`${updatedGuitar.manufacturer} ${updatedGuitar.name}`);
+      setSearchQuery(`${selectedGuitar.manufacturer} ${selectedGuitar.name}`);
       
       // Show success message
       setFormSubmitted(true);

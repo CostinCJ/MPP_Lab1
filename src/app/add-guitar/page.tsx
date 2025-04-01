@@ -3,19 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-
-type Guitar = {
-  id: string;
-  name: string;
-  manufacturer: string;
-  type: string;
-  strings: string;
-  condition: string;
-  price: string;
-  imageUrl?: string;
-};
+import { useGuitars } from '../context/GuitarContext';
 
 export default function AddGuitar() {
+  // Get guitars and addGuitar function from context
+  const { guitars, addGuitar } = useGuitars();
+  
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -40,16 +33,13 @@ export default function AddGuitar() {
     price: false,
     image: false,
   });
-
-  // State for guitars (simulating in-memory database)
-  const [guitars, setGuitars] = useState<Guitar[]>([]);
   
   // State for form submission status
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [duplicateError, setDuplicateError] = useState(false);
 
   // State for image upload
-    const [imageSelected, setImageSelected] = useState(false);
+  const [imageSelected, setImageSelected] = useState(false);
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -146,7 +136,7 @@ export default function AddGuitar() {
           name: true,
           manufacturer: true
         });
-        
+
         // Show duplicate error message temporarily
         setFormSubmitted(false); // Reset success state
         setDuplicateError(true);
@@ -160,15 +150,16 @@ export default function AddGuitar() {
       
       const imageUrl = imagePreview || '/guitar-placeholder.png';
       
-      // Generate a unique ID
-      const newGuitar: Guitar = {
-        id: `guitar_${Date.now()}`,
-        ...formData,
-        imageUrl,
-      };
-      
-      // Add to in-memory array
-      setGuitars([...guitars, newGuitar]);
+      // Add to shared context instead of local state
+      addGuitar({
+        name: formData.name,
+        manufacturer: formData.manufacturer,
+        type: formData.type,
+        strings: formData.strings,
+        condition: formData.condition,
+        price: formData.price,
+        imageUrl
+      });
       
       // Reset form
       setFormData({
@@ -182,6 +173,7 @@ export default function AddGuitar() {
       
       // Reset image
       setImagePreview(null);
+      setImageSelected(false);
       
       // Show success message
       setFormSubmitted(true);
@@ -289,17 +281,20 @@ export default function AddGuitar() {
             </div>
             
             <div className="mb-4">
-              <label htmlFor="type" className="block mb-2">Type</label>
-              <input
-                type="text"
+              <label htmlFor="Type" className="block mb-2">Type</label>
+              <select
                 id="type"
                 name="type"
-                placeholder="Guitar Type"
                 value={formData.type}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border rounded ${errors.type ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.type && <p className="text-red-500 text-sm mt-1">Guitar type is required</p>}
+              >
+                <option value="">Select type</option>
+                <option value="Electric">Electric</option>
+                <option value="Acoustic">Acoustic</option>
+                <option value="Classical">Classical</option>
+              </select>
+              {errors.condition && <p className="text-red-500 text-sm mt-1">Type is required</p>}
             </div>
             
             <div className="mb-4">
