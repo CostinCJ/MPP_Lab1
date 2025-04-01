@@ -72,22 +72,31 @@ export default function DeleteGuitar() {
 
   // Handle clicking outside the dropdown to close it
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        searchInputRef.current &&
-        !searchInputRef.current.contains(event.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
+    if (searchQuery.trim() === '') {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    const results = guitars.filter(guitar => {
+      const fullName = `${guitar.manufacturer} ${guitar.name}`.toLowerCase();
+      return fullName.includes(lowerCaseQuery);
+    });
+
+    let shouldShow = false;
+    if (results.length > 0) {
+        if (!selectedGuitar) {
+            shouldShow = true;
+        } else {
+            const exactMatch = `${selectedGuitar.manufacturer} ${selectedGuitar.name}`.toLowerCase() === searchQuery.toLowerCase();
+            shouldShow = !exactMatch;
+        }
+    }
+    setShowDropdown(shouldShow);
+    setSearchResults(results);
+
+}, [searchQuery, guitars, selectedGuitar]);
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
