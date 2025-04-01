@@ -14,11 +14,24 @@ type Guitar = {
   condition: string;
   price: string;
   imageUrl?: string;
+  priceCategory?: 'cheapest' | 'mostExpensive' | 'averagePrice' | null;
+};
+
+type GuitarWithCategory = Guitar & {
+  priceCategory: 'cheapest' | 'mostExpensive' | 'averagePrice' | null;
 };
 
 export default function AllGuitars() {
   // Get guitars from context instead of local state
   const { guitars } = useGuitars();
+  
+  // State for enhanced guitars with price categories
+  const [enhancedGuitars, setEnhancedGuitars] = useState<GuitarWithCategory[]>([]);
+  const [priceStats, setPriceStats] = useState({
+    min: 0,
+    max: 0,
+    avg: 0
+  });
   
   // Filter state
   const [filters, setFilters] = useState({
@@ -50,12 +63,64 @@ export default function AllGuitars() {
 
   // Sort state
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+  
+  // Toggle state for showing stats
+  const [showStats, setShowStats] = useState(true);
 
   // Filtered guitars
-  const [filteredGuitars, setFilteredGuitars] = useState<Guitar[]>(guitars);
+  const [filteredGuitars, setFilteredGuitars] = useState<Guitar[]>([]);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Calculate price statistics and enhance guitars with categories
+  useEffect(() => {
+    if (guitars && guitars.length > 0) {
+      const prices = guitars.map(guitar => parseInt(guitar.price));
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+      
+      setPriceStats({
+        min: minPrice,
+        max: maxPrice,
+        avg: avgPrice
+      });
+      
+      // Find closest to average price
+      let closestToAvg = guitars[0];
+      let minDiff = Math.abs(parseInt(closestToAvg.price) - avgPrice);
+      
+      guitars.forEach(guitar => {
+        const diff = Math.abs(parseInt(guitar.price) - avgPrice);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestToAvg = guitar;
+        }
+      });
+      
+      // Enhance guitars with price categories
+      const enhanced = guitars.map(guitar => {
+        let priceCategory: 'cheapest' | 'mostExpensive' | 'averagePrice' | null = null;
+        const price = parseInt(guitar.price);
+        
+        if (price === minPrice) {
+          priceCategory = 'cheapest';
+        } else if (price === maxPrice) {
+          priceCategory = 'mostExpensive';
+        } else if (guitar.id === closestToAvg.id) {
+          priceCategory = 'averagePrice';
+        }
+        
+        return {
+          ...guitar,
+          priceCategory
+        } as GuitarWithCategory;
+      });
+      
+      setEnhancedGuitars(enhanced);
+    }
+  }, [guitars]);
 
   // Handle filter changes
   const handleFilterChange = (category: string, value: string) => {
@@ -75,7 +140,7 @@ export default function AllGuitars() {
 
   // Apply filters and search
   useEffect(() => {
-    const result = guitars.filter(guitar => {
+    const result = enhancedGuitars.filter(guitar => {
       // Apply type filter
       if (!filters.type[guitar.type as keyof typeof filters.type]) {
         return false;
@@ -122,7 +187,39 @@ export default function AllGuitars() {
     }
     setFilteredGuitars(sortedResult);
     
-  }, [filters, guitars, searchQuery, sortOrder]);
+  }, [filters, enhancedGuitars, searchQuery, sortOrder]);
+
+  // Get the background color based on price category
+  const getPriceCategoryStyle = (category: string | null | undefined) => {
+    if (!showStats) return {};
+    
+    switch(category) {
+      case 'cheapest':
+        return { backgroundColor: 'rgba(254, 215, 215, 0.5)' }; // Light red
+      case 'mostExpensive':
+        return { backgroundColor: 'rgba(209, 250, 229, 0.5)' }; // Light green
+      case 'averagePrice':
+        return { backgroundColor: 'rgba(219, 234, 254, 0.5)' }; // Light blue
+      default:
+        return {};
+    }
+  };
+
+  // Get text description for price category
+  const getPriceCategoryLabel = (category: string | null | undefined) => {
+    if (!showStats) return null;
+    
+    switch(category) {
+      case 'cheapest':
+        return <span className="text-xs font-medium text-red-700 bg-red-100 px-2 py-1 rounded-full">Lowest Price</span>;
+      case 'mostExpensive':
+        return <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">Highest Price</span>;
+      case 'averagePrice':
+        return <span className="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded-full">Average Price Range</span>;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
@@ -171,182 +268,209 @@ export default function AllGuitars() {
       {/* Main Content */}
       <div className="flex-grow mx-auto w-full max-w-7xl px-4 py-8">
         <div className="flex flex-col md:flex-row gap-10">
-        {/* Left side - Filters */}
-        <div className="w-full md:w-56 -ml-18">
-        <div className="border border-gray-400 rounded-xl">
-            <div className="p-4">
-            <h2 className="font-medium mb-1.5">Guitar Type</h2>
-            <div className="space-y-1">
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="electric"
-                    checked={filters.type.Electric}
-                    onChange={() => handleFilterChange('type', 'Electric')}
-                    className="mr-2"
-                />
-                <label htmlFor="electric" className="text-sm">Electric</label>
+          {/* Left side - Filters */}
+          <div className="w-full md:w-56 -ml-18">
+            <div className="border border-gray-400 rounded-xl">
+              <div className="p-4">
+                <h2 className="font-medium mb-1.5">Guitar Type</h2>
+                <div className="space-y-1">
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="electric"
+                      checked={filters.type.Electric}
+                      onChange={() => handleFilterChange('type', 'Electric')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="electric" className="text-sm">Electric</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="acoustic"
+                      checked={filters.type.Acoustic}
+                      onChange={() => handleFilterChange('type', 'Acoustic')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="acoustic" className="text-sm">Acoustic</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="classical"
+                      checked={filters.type.Classical}
+                      onChange={() => handleFilterChange('type', 'Classical')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="classical" className="text-sm">Classical</label>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="acoustic"
-                    checked={filters.type.Acoustic}
-                    onChange={() => handleFilterChange('type', 'Acoustic')}
-                    className="mr-2"
-                />
-                <label htmlFor="acoustic" className="text-sm">Acoustic</label>
-                </div>
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="classical"
-                    checked={filters.type.Classical}
-                    onChange={() => handleFilterChange('type', 'Classical')}
-                    className="mr-2"
-                />
-                <label htmlFor="classical" className="text-sm">Classical</label>
-                </div>
-            </div>
-            </div>
+              </div>
 
-            <div className="p-4">
-            <h2 className="font-medium mb-1.5">Price</h2>
-            <div className="flex justify-between text-xs text-gray-600 mb-1">
-                <span>${filters.priceRange.min}</span>
-                <span>${filters.priceRange.max}</span>
-            </div>
-            <div className="flex items-center my-2">
-                <input 
-                type="range"
-                name="price"
-                min="0" 
-                max="10000" 
-                value={filters.priceRange.max}
-                onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    setFilters({
-                    ...filters,
-                    priceRange: {
-                        ...filters.priceRange,
-                        max: value
-                    }
-                    });
-                }}
-                className="w-full appearance-none rounded-full h-1 bg-gray-300 focus:outline-none"
-                />
-            </div>
-            </div>
+              <div className="p-4">
+                <h2 className="font-medium mb-1.5">Price</h2>
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span>${filters.priceRange.min}</span>
+                  <span>${filters.priceRange.max}</span>
+                </div>
+                <div className="flex items-center my-2">
+                  <input 
+                    type="range"
+                    name="price"
+                    min="0" 
+                    max="10000" 
+                    value={filters.priceRange.max}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      setFilters({
+                        ...filters,
+                        priceRange: {
+                          ...filters.priceRange,
+                          max: value
+                        }
+                      });
+                    }}
+                    className="w-full appearance-none rounded-full h-1 bg-gray-300 focus:outline-none"
+                  />
+                </div>
+              </div>
 
-            <div className="p-4">
-            <h2 className="font-medium mb-1.5">Manufacturer</h2>
-            <div className="space-y-1">
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="fender"
-                    checked={filters.manufacturer.Fender}
-                    onChange={() => handleFilterChange('manufacturer', 'Fender')}
-                    className="mr-2"
-                />
-                <label htmlFor="fender" className="text-sm">Fender</label>
+              <div className="p-4">
+                <h2 className="font-medium mb-1.5">Manufacturer</h2>
+                <div className="space-y-1">
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="fender"
+                      checked={filters.manufacturer.Fender}
+                      onChange={() => handleFilterChange('manufacturer', 'Fender')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="fender" className="text-sm">Fender</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="gibson"
+                      checked={filters.manufacturer.Gibson}
+                      onChange={() => handleFilterChange('manufacturer', 'Gibson')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="gibson" className="text-sm">Gibson</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="ibanez"
+                      checked={filters.manufacturer.Ibanez}
+                      onChange={() => handleFilterChange('manufacturer', 'Ibanez')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="ibanez" className="text-sm">Ibanez</label>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="gibson"
-                    checked={filters.manufacturer.Gibson}
-                    onChange={() => handleFilterChange('manufacturer', 'Gibson')}
-                    className="mr-2"
-                />
-                <label htmlFor="gibson" className="text-sm">Gibson</label>
-                </div>
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="ibanez"
-                    checked={filters.manufacturer.Ibanez}
-                    onChange={() => handleFilterChange('manufacturer', 'Ibanez')}
-                    className="mr-2"
-                />
-                <label htmlFor="ibanez" className="text-sm">Ibanez</label>
-                </div>
-            </div>
-            </div>
+              </div>
 
-            <div className="p-4">
-            <h2 className="font-medium mb-1.5">Condition</h2>
-            <div className="space-y-1">
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="new"
-                    checked={filters.condition.New}
-                    onChange={() => handleFilterChange('condition', 'New')}
-                    className="mr-2"
-                />
-                <label htmlFor="new" className="text-sm">New</label>
+              <div className="p-4">
+                <h2 className="font-medium mb-1.5">Condition</h2>
+                <div className="space-y-1">
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="new"
+                      checked={filters.condition.New}
+                      onChange={() => handleFilterChange('condition', 'New')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="new" className="text-sm">New</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="used"
+                      checked={filters.condition.Used}
+                      onChange={() => handleFilterChange('condition', 'Used')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="used" className="text-sm">Used</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="vintage"
+                      checked={filters.condition.Vintage}
+                      onChange={() => handleFilterChange('condition', 'Vintage')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="vintage" className="text-sm">Vintage</label>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="used"
-                    checked={filters.condition.Used}
-                    onChange={() => handleFilterChange('condition', 'Used')}
-                    className="mr-2"
-                />
-                <label htmlFor="used" className="text-sm">Used</label>
-                </div>
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="vintage"
-                    checked={filters.condition.Vintage}
-                    onChange={() => handleFilterChange('condition', 'Vintage')}
-                    className="mr-2"
-                />
-                <label htmlFor="vintage" className="text-sm">Vintage</label>
-                </div>
-            </div>
-            </div>
+              </div>
 
-            <div className="p-4">
-            <h2 className="font-medium mb-1.5">String Type</h2>
-            <div className="space-y-1">
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="6-string"
-                    checked={filters.strings['6-string']}
-                    onChange={() => handleFilterChange('strings', '6-string')}
-                    className="mr-2"
-                />
-                <label htmlFor="6-string" className="text-sm">6-string</label>
+              <div className="p-4">
+                <h2 className="font-medium mb-1.5">String Type</h2>
+                <div className="space-y-1">
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="6-string"
+                      checked={filters.strings['6-string']}
+                      onChange={() => handleFilterChange('strings', '6-string')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="6-string" className="text-sm">6-string</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="7-string"
+                      checked={filters.strings['7-string']}
+                      onChange={() => handleFilterChange('strings', '7-string')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="7-string" className="text-sm">7-string</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="12-string"
+                      checked={filters.strings['12-string']}
+                      onChange={() => handleFilterChange('strings', '12-string')}
+                      className="mr-2"
+                    />
+                    <label htmlFor="12-string" className="text-sm">12-string</label>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="7-string"
-                    checked={filters.strings['7-string']}
-                    onChange={() => handleFilterChange('strings', '7-string')}
-                    className="mr-2"
-                />
-                <label htmlFor="7-string" className="text-sm">7-string</label>
-                </div>
-                <div className="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="12-string"
-                    checked={filters.strings['12-string']}
-                    onChange={() => handleFilterChange('strings', '12-string')}
-                    className="mr-2"
-                />
-                <label htmlFor="12-string" className="text-sm">12-string</label>
-                </div>
+              </div>
             </div>
+            
+            {/* Price Statistics Box */}
+            <div className="mt-6 border border-gray-400 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-medium">Price Statistics</h2>
+                <button 
+                  onClick={() => setShowStats(!showStats)}
+                  className="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                >
+                  {showStats ? 'Hide Highlights' : 'Show Highlights'}
+                </button>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-medium">Lowest:</span>
+                  <span className="text-red-700">${priceStats.min}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Highest:</span>
+                  <span className="text-green-700">${priceStats.max}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Average:</span>
+                  <span className="text-blue-700">${priceStats.avg.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
-        </div>
-        </div>
+          </div>
 
           {/* Right side - Guitar grid with search and sort */}
           <div className="flex-1">
@@ -387,7 +511,11 @@ export default function AllGuitars() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredGuitars.length > 0 ? (
                 filteredGuitars.map(guitar => (
-                  <div key={guitar.id} className="border border-gray-400 rounded-lg overflow-hidden">
+                  <div 
+                    key={guitar.id} 
+                    className="border border-gray-400 rounded-lg overflow-hidden transition-all duration-200 hover:shadow-lg"
+                    style={getPriceCategoryStyle(guitar.priceCategory)}
+                  >
                     <div className="h-64 flex items-center justify-center p-2">
                       <Image
                         src={guitar.imageUrl || "/guitar-placeholder.png"}
@@ -403,11 +531,12 @@ export default function AllGuitars() {
                         <h3 className="font-medium">{guitar.manufacturer} {guitar.name}</h3>
                         <span className="font-bold">${guitar.price}</span>
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 mb-2">
                         <p>Type: {guitar.type}</p>
                         <p>Condition: {guitar.condition}</p>
                         <p>Strings: {guitar.strings}</p>
                       </div>
+                      {getPriceCategoryLabel(guitar.priceCategory)}
                     </div>
                   </div>
                 ))
