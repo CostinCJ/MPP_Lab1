@@ -22,7 +22,7 @@ type GuitarWithCategory = Guitar & {
 };
 
 export default function AllGuitars() {
-  // Get guitars from context instead of local state
+  // Get guitars from context 
   const { guitars } = useGuitars();
   
   // State for enhanced guitars with price categories

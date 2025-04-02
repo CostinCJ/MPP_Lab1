@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AllGuitars from './page';
 import { GuitarProvider } from '../context/GuitarContext';
@@ -205,5 +205,98 @@ describe('AllGuitars Component', () => {
     // Cheaper guitars should still be visible
     expect(screen.queryByText(/Fender Squier/i)).toBeInTheDocument();
     expect(screen.queryByText(/Ibanez Gio/i)).toBeInTheDocument();
+  });
+
+  test('displays price statistics correctly', async () => {
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
+    
+    // Check if the price statistics section exists
+    expect(screen.getByText('Price Statistics')).toBeInTheDocument();
+    
+    // Check specific price statistics labels
+    expect(screen.getByText('Lowest:')).toBeInTheDocument();
+    expect(screen.getByText('Highest:')).toBeInTheDocument();
+    expect(screen.getByText('Average:')).toBeInTheDocument();
+    
+    await waitFor(() => {
+      const priceElements = screen.getAllByText(/\$\d+/);
+      const prices = priceElements.map(el => 
+        parseInt(el.textContent.replace('$', ''))
+      ).filter(price => !isNaN(price));
+      
+      // Check that we have at least one price that matches the minimum and maximum
+      expect(prices.some(price => price === 115)).toBe(true); 
+      expect(prices.some(price => price === 2499)).toBe(true);
+    });
+  });
+
+  test('price statistics box displays correct information', async () => {
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
+    
+    // Check if the price statistics section exists
+    expect(screen.getByText('Price Statistics')).toBeInTheDocument();
+    
+    // Check the statistics box contains the expected elements
+    const statsBox = screen.getByText('Price Statistics').closest('.mt-6.border.border-gray-400.rounded-xl.p-4');
+    expect(statsBox).toBeInTheDocument();
+    
+    expect(within(statsBox).getByText('Lowest:')).toBeInTheDocument();
+    expect(within(statsBox).getByText('Highest:')).toBeInTheDocument();
+    expect(within(statsBox).getByText('Average:')).toBeInTheDocument();
+    
+    // Verify the toggle button exists
+    const toggleButton = within(statsBox).getByRole('button');
+    expect(toggleButton).toHaveTextContent('Hide Highlights');
+  });
+
+  test('highlights can be toggled off and on', async () => {
+    render(
+      <GuitarProvider>
+        <AllGuitars />
+      </GuitarProvider>
+    );
+    
+    // Find the toggle button
+    const toggleButton = screen.getByText('Hide Highlights');
+    
+    // Initially, at least one guitar should have a price category label
+    await waitFor(() => {
+      expect(screen.queryByText('Highest Price')).toBeInTheDocument();
+    });
+    
+    // Click to hide highlights
+    fireEvent.click(toggleButton);
+    
+    // Button text should change
+    expect(screen.getByText('Show Highlights')).toBeInTheDocument();
+    
+    // Price category labels should disappear
+    await waitFor(() => {
+      expect(screen.queryByText('Highest Price')).not.toBeInTheDocument();
+      expect(screen.queryByText('Lowest Price')).not.toBeInTheDocument();
+      expect(screen.queryByText('Average Price Range')).not.toBeInTheDocument();
+    });
+    
+    // Click to show highlights again
+    fireEvent.click(screen.getByText('Show Highlights'));
+    
+    // Button text should change back
+    expect(screen.getByText('Hide Highlights')).toBeInTheDocument();
+    
+    // Price category labels should reappear
+    await waitFor(() => {
+      // At least one price category should be visible again
+      const priceLabels = screen.queryAllByText(/Price/i);
+      // We should have more than just "Price Statistics" and "Price ascending/descending"
+      expect(priceLabels.length).toBeGreaterThan(3);
+    });
   });
 });
