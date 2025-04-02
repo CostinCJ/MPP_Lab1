@@ -20,8 +20,8 @@ Prerequisites:
 Installation:
 
 1. Clone the repository:
-git clone https://github.com/yourusername/string-tracker.git
-cd string-tracker
+git clone https://github.com/CostinCJ/MPP_Lab1.git
+cd MPP_Lab1
 
 2. Install dependencies:
 npm install
