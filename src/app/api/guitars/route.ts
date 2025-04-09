@@ -1,4 +1,3 @@
-// src/app/api/guitars/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   getAllGuitars,

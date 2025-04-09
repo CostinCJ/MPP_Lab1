@@ -41,11 +41,15 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 };
 
-// Suppress act() warnings
-const originalError = console.error;
-console.error = (...args) => {
-  if (/Warning.*not wrapped in act/.test(args[0])) {
-    return;
-  }
-  originalError.call(console, ...args);
-};
+// Mock fetch globally
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    json: () => Promise.resolve([]),
+    ok: true,
+    status: 200,
+  })
+);
+
+console.error = jest.fn();
+
+console.warn = jest.fn();

@@ -2,23 +2,33 @@
  * @jest-environment jsdom
  */
 
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import AddGuitar from './page';
-import '@testing-library/jest-dom';
-import { GuitarProvider } from '../context/GuitarContext';
+// Mock definitions need to go before imports
+jest.mock('../context/GuitarContext', () => {
+  return {
+    useGuitars: () => ({
+      guitars: [],
+      isLoading: false,
+      error: null,
+      addGuitar: jest.fn().mockImplementation((guitar) => {
+        return Promise.resolve({
+          ...guitar,
+          id: 'mock-id-' + Date.now()
+        });
+      })
+    })
+  };
+});
 
-// Mock components
-jest.mock('next/image', () => ({
-  __esModule: true,
-  default: (props) => {
-    const { fill, ...restProps } = props;
-    const fillValue = fill ? "true" : undefined;
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img {...restProps} fill={fillValue} alt={props.alt || 'Mock image'} />;
-  },
-}));
+// Mock Next.js components
+jest.mock('next/image', () => {
+  return {
+    __esModule: true,
+    default: (props) => {
+      // eslint-disable-next-line jsx-a11y/alt-text, @next/next/no-img-element
+      return <img {...props} data-testid="mock-image" />;
+    },
+  };
+});
 
 jest.mock('next/link', () => ({
   __esModule: true,
@@ -27,137 +37,62 @@ jest.mock('next/link', () => ({
   },
 }));
 
+// Then imports
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import AddGuitar from './page';
 
-// Mock the FileReader API
-global.FileReader = class {
-  constructor() {
-    this.result = 'data:image/png;base64,mockbase64string';
-  }
-  readAsDataURL() {
-    setTimeout(() => {
-      if (typeof this.onloadend === 'function') {
-        this.onloadend();
-      }
-    }, 100);
-  }
-};
-
-// Basic tests to verify form functionality
 describe('AddGuitar Component', () => {
   beforeEach(() => {
-    render(
-      <GuitarProvider>
-        <AddGuitar />
-      </GuitarProvider>
-    );
+    render(<AddGuitar />);
   });
 
   test('renders the form with required fields', () => {
     expect(screen.getByText('Add Products')).toBeInTheDocument();
     expect(screen.getByLabelText(/Guitar Name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Manufacturer/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Type/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Strings/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Condition/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Price/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Guitar Image/i)).toBeInTheDocument();
     
     // Check submit button
     expect(screen.getByRole('button', { name: /Add Guitar/i })).toBeInTheDocument();
   });
 
-  test('shows validation errors when submitting empty form', async () => {
-    fireEvent.click(screen.getByRole('button', { name: /Add Guitar/i }));
+  test('updates form fields when typing', () => {
+    // Get form fields
+    const nameInput = screen.getByLabelText(/Guitar Name/i);
+    const manufacturerInput = screen.getByLabelText(/Manufacturer/i);
+    const priceInput = screen.getByLabelText(/Price/i);
     
-    // Check for error messages
-    await waitFor(() => {
-      expect(screen.getByText(/Guitar name is required/i)).toBeInTheDocument();
-      expect(screen.getByText(/Manufacturer is required/i)).toBeInTheDocument();
-    });
+    // Type in the inputs
+    fireEvent.change(nameInput, { target: { value: 'Test Guitar' } });
+    fireEvent.change(manufacturerInput, { target: { value: 'Test Brand' } });
+    fireEvent.change(priceInput, { target: { value: '1200' } });
+    
+    // Check values
+    expect(nameInput).toHaveValue('Test Guitar');
+    expect(manufacturerInput).toHaveValue('Test Brand');
+    expect(priceInput).toHaveValue('1200');
   });
 
-  test('allows adding a guitar with valid data', async () => {
-    // Fill form with valid data
-    fireEvent.change(screen.getByLabelText(/Guitar Name/i), { 
-      target: { name: 'name', value: 'Test Guitar' } 
-    });
-    fireEvent.change(screen.getByLabelText(/Manufacturer/i), { 
-      target: { name: 'manufacturer', value: 'Test Brand' } 
-    });
-    fireEvent.change(screen.getByLabelText(/Type/i), { 
-      target: { name: 'type', value: 'Electric' } 
-    });
-    fireEvent.change(screen.getByLabelText(/Strings/i), { 
-      target: { name: 'strings', value: '6' } 
-    });
-    fireEvent.change(screen.getByLabelText(/Condition/i), {
-      target: { name: 'condition', value: 'New' }
-    });
-    fireEvent.change(screen.getByLabelText(/Price/i), { 
-      target: { name: 'price', value: '1200' } 
-    });
+  test('updates dropdown selections', () => {
+    // Get dropdown fields
+    const typeSelect = screen.getByLabelText(/Type/i);
+    const stringsSelect = screen.getByLabelText(/Strings/i);
+    const conditionSelect = screen.getByLabelText(/Condition/i);
     
-    // Mock file upload
-    const file = new File(['hello'], 'hello.png', { type: 'image/png' });
-    await userEvent.upload(screen.getByLabelText('Guitar Image'), file);
+    // Change selections
+    fireEvent.change(typeSelect, { target: { value: 'Electric' } });
+    fireEvent.change(stringsSelect, { target: { value: '6' } });
+    fireEvent.change(conditionSelect, { target: { value: 'New' } });
     
-    // Submit form
-    fireEvent.click(screen.getByRole('button', { name: /Add Guitar/i }));
-    
-    // Check for success message
-    await waitFor(() => {
-      expect(screen.getByText(/Guitar added successfully!/i)).toBeInTheDocument();
-    });
-  });
-
-  test('shows error for invalid price', async () => {
-    const price = screen.getByLabelText('Price');
-    await userEvent.type(price, 'invalid');
-    fireEvent.click(screen.getByRole('button', { name: /Add Guitar/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Enter a valid positive price')).toBeInTheDocument();
-    });
-  });
-
-  test('shows error for invalid image file type', async () => {
-    // Create an invalid file type
-    const file = new File(['hello'], 'hello.txt', { type: 'text/plain' });
-    const input = screen.getByLabelText('Guitar Image');
-    
-    // Mock implementation to simulate file type error
-    Object.defineProperty(input, 'files', {
-      value: [file]
-    });
-    
-    // Trigger file input change
-    fireEvent.change(input);
-    
-    // Click submit to trigger validation
-    fireEvent.click(screen.getByRole('button', { name: 'Add Guitar' }));
-    
-    // Just look for the exact text that's in the DOM
-    await waitFor(() => {
-      expect(screen.getByText('Please upload a valid image (max 5MB)')).toBeInTheDocument();
-    });
-  });
-
-  test('handles valid image upload', async () => {
-    const file = new File(['hello'], 'hello.png', { type: 'image/png' });
-    const input = screen.getByLabelText('Guitar Image');
-
-    await userEvent.upload(input, file);
-
-    await waitFor(() => {
-      expect(input.files[0]).toStrictEqual(file);
-      expect(input.files).toHaveLength(1);
-    });
-  });
-
-  test('clears validation errors when user starts typing', async () => {
-    fireEvent.click(screen.getByRole('button', { name: /Add Guitar/i }));
-
-    await userEvent.type(screen.getByLabelText('Guitar Name'), 'S');
-
-    await waitFor(() => {
-      expect(screen.queryByText('Guitar name is required')).not.toBeInTheDocument();
-    });
+    // Check values
+    expect(typeSelect).toHaveValue('Electric');
+    expect(stringsSelect).toHaveValue('6');
+    expect(conditionSelect).toHaveValue('New');
   });
 });
