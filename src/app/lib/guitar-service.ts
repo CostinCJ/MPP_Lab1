@@ -1,4 +1,3 @@
-// src/app/lib/guitar-service.ts
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -14,7 +13,7 @@ export type Guitar = {
   imageUrl?: string;
 };
 
-// Path to our data file
+// Path to the data file
 const DATA_FILE_PATH = path.join(process.cwd(), 'data', 'guitars.json');
 
 // Initialize data directory and file if they don't exist
