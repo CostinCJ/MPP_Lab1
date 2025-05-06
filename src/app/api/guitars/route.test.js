@@ -78,7 +78,6 @@ describe('Guitars Collection API Route Handlers', () => {
       url: 'http://localhost:3000/api/guitars',
       json: jest.fn()
     };
-    // Remove TypeScript cast (as unknown as NextRequest)
   });
 
   describe('GET handler', () => {

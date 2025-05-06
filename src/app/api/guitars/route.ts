@@ -5,7 +5,7 @@ import {
   getFilteredAndSortedGuitars 
 } from '@/app/lib/guitar-service';
 
-// GET handler - retrieve all guitars with optional filtering, sorting, and pagination
+// GET - retrieve all guitars with optional filtering, sorting, and pagination
 export async function GET(request: NextRequest) {
     try {
       const { searchParams } = new URL(request.url);
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// POST handler - create a new guitar
+// POST - create a new guitar
 export async function POST(request: NextRequest) {
     try {
       const guitarData = await request.json();

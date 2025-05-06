@@ -33,7 +33,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   }
 }
 
-// PATCH handler - update a specific guitar
+// PATCH - update a specific guitar
 export async function PATCH(request: NextRequest, { params }: Params) {
     try {
       const { id } = params;
@@ -101,7 +101,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 }
 
-// DELETE handler - remove a specific guitar
+// DELETE - remove a specific guitar
 export async function DELETE(request: NextRequest, { params }: Params) {
     try {
       const { id } = params;
