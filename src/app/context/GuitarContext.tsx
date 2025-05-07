@@ -11,15 +11,20 @@ import React, {
 } from 'react';
 
 // Define the shape of a Guitar object
-type Guitar = {
+import { Brand } from "@/lib/entities/Brand";
+
+export type Guitar = {
   id: string;
-  name: string;
-  manufacturer: string;
+  name: string; // Added name property
+  manufacturer: string; // Added manufacturer property
+  model: string;
+  brandName: string; // Use brandName to match form and API expectation
   type: string;
   strings: string;
   condition: string;
   price: string;
   imageUrl?: string;
+  brand?: Brand; // Add the brand relationship
 };
 
 // Define the shape for filtering options

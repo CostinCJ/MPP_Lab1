@@ -11,8 +11,8 @@ export default function AddGuitar() {
   
   // Form state
   const [formData, setFormData] = useState({
-    name: '',
-    manufacturer: '',
+    model: '',
+    brandName: '',
     type: '',
     strings: '',
     condition: '',
@@ -25,8 +25,8 @@ export default function AddGuitar() {
 
   // Validation errors state
   const [errors, setErrors] = useState({
-    name: false,
-    manufacturer: false,
+    model: false,
+    brandName: false,
     type: false,
     strings: false,
     condition: false,
@@ -100,13 +100,13 @@ export default function AddGuitar() {
   // Validate form data
   const validateForm = () => {
     const newErrors = {
-      name: formData.name.trim() === '',
-      manufacturer: formData.manufacturer.trim() === '',
+      model: formData.model.trim() === '',
+      brandName: formData.brandName.trim() === '',
       type: formData.type.trim() === '',
-      strings: formData.strings === '', 
+      strings: formData.strings === '',
       condition: formData.condition.trim() === '',
-      price: formData.price.trim() === '' || 
-             isNaN(Number(formData.price.replace(/[^\d.-]/g, ''))) || 
+      price: formData.price.trim() === '' ||
+             isNaN(Number(formData.price.replace(/[^\d.-]/g, ''))) ||
              Number(formData.price.replace(/[^\d.-]/g, '')) <= 0,
       image: imageError || !imageSelected,
     };
@@ -124,17 +124,17 @@ export default function AddGuitar() {
     if (validateForm()) {
       // Check for duplicate based on name and manufacturer
       const isDuplicate = guitars.some(
-        guitar => 
-          guitar.name.toLowerCase() === formData.name.toLowerCase() && 
-          guitar.manufacturer.toLowerCase() === formData.manufacturer.toLowerCase()
+        guitar =>
+          guitar.model.toLowerCase() === formData.model.toLowerCase() &&
+          guitar.brandName.toLowerCase() === formData.brandName.toLowerCase()
       );
       
       if (isDuplicate) {
         // Show error for duplicate guitar
         setErrors({
           ...errors,
-          name: true,
-          manufacturer: true
+          model: true,
+          brandName: true
         });
 
         // Show duplicate error message temporarily
@@ -152,8 +152,10 @@ export default function AddGuitar() {
       
       // Add to shared context instead of local state
       addGuitar({
-        name: formData.name,
-        manufacturer: formData.manufacturer,
+        name: formData.model, // Map model to name
+        manufacturer: formData.brandName, // Map brandName to manufacturer
+        model: formData.model, // Keep model for now, might be used elsewhere
+        brandName: formData.brandName, // Keep brandName for now, might be used elsewhere
         type: formData.type,
         strings: formData.strings,
         condition: formData.condition,
@@ -163,8 +165,8 @@ export default function AddGuitar() {
       
       // Reset form
       setFormData({
-        name: '',
-        manufacturer: '',
+        model: '',
+        brandName: '',
         type: '',
         strings: '',
         condition: '',
@@ -253,33 +255,33 @@ export default function AddGuitar() {
           {/* Guitar Form */}
           <form onSubmit={handleSubmit}>
             <div className="mb-4 my-15">
-              <label htmlFor="name" className="block mb-2">Guitar Name</label>
+              <label htmlFor="model" className="block mb-2">Guitar Model</label>
               <input
                 type="text"
-                id="name"
-                name="name"
-                placeholder="Guitar Name"
-                value={formData.name}
+                id="model"
+                name="model"
+                placeholder="Guitar Model"
+                value={formData.model}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full px-3 py-2 border rounded ${errors.model ? 'border-red-500' : 'border-gray-300'}`}
               />
-              {errors.name && <p className="text-red-500 text-sm mt-1">Guitar name is required</p>}
+              {errors.model && <p className="text-red-500 text-sm mt-1">Guitar model is required</p>}
             </div>
-            
+
             <div className="mb-4">
-              <label htmlFor="manufacturer" className="block mb-2">Manufacturer</label>
+              <label htmlFor="brandName" className="block mb-2">Manufacturer</label>
               <input
                 type="text"
-                id="manufacturer"
-                name="manufacturer"
+                id="brandName"
+                name="brandName"
                 placeholder="Manufacturer Name"
-                value={formData.manufacturer}
+                value={formData.brandName}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.manufacturer ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full px-3 py-2 border rounded ${errors.brandName ? 'border-red-500' : 'border-gray-300'}`}
               />
-              {errors.manufacturer && <p className="text-red-500 text-sm mt-1">Manufacturer is required</p>}
+              {errors.brandName && <p className="text-red-500 text-sm mt-1">Manufacturer is required</p>}
             </div>
-            
+
             <div className="mb-4">
               <label htmlFor="type" className="block mb-2">Type</label>
               <select
@@ -294,9 +296,9 @@ export default function AddGuitar() {
                 <option value="Acoustic">Acoustic</option>
                 <option value="Classical">Classical</option>
               </select>
-              {errors.condition && <p className="text-red-500 text-sm mt-1">Type is required</p>}
+              {errors.type && <p className="text-red-500 text-sm mt-1">Type is required</p>}
             </div>
-            
+
             <div className="mb-4">
                 <label htmlFor="strings" className="block mb-2">Strings</label>
                 <select
@@ -313,7 +315,7 @@ export default function AddGuitar() {
                 </select>
                 {errors.strings && <p className="text-red-500 text-sm mt-1">Please select number of strings</p>}
             </div>
-            
+
             <div className="mb-4">
               <label htmlFor="condition" className="block mb-2">Condition</label>
               <select
@@ -330,7 +332,7 @@ export default function AddGuitar() {
               </select>
               {errors.condition && <p className="text-red-500 text-sm mt-1">Condition is required</p>}
             </div>
-            
+
             <div className="mb-6">
               <label htmlFor="price" className="block mb-2">Price</label>
               <input
@@ -344,7 +346,7 @@ export default function AddGuitar() {
               />
               {errors.price && <p className="text-red-500 text-sm mt-1">Enter a valid positive price</p>}
             </div>
-            
+
             <div className="mb-6">
               <label htmlFor="image" className="block mb-2">Guitar Image</label>
               <input
@@ -403,8 +405,8 @@ export default function AddGuitar() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {guitars.map((guitar) => (
                       <tr key={guitar.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{guitar.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{guitar.manufacturer}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{guitar.model}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{guitar.brand?.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{guitar.type}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${guitar.price}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -412,7 +414,7 @@ export default function AddGuitar() {
                             <div className="relative w-12 h-12 rounded overflow-hidden">
                               <Image
                                 src={guitar.imageUrl}
-                                alt={guitar.name}
+                                alt={guitar.model}
                                 fill
                                 style={{ objectFit: 'cover' }}
                               />

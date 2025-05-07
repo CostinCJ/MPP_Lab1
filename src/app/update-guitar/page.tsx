@@ -3,21 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useGuitars } from '../context/GuitarContext';
-
-type Guitar = {
-  id: string;
-  name: string;
-  manufacturer: string;
-  type: string;
-  strings: string;
-  condition: string;
-  price: string;
-  imageUrl?: string;
-};
+import { useGuitars, Guitar } from '../context/GuitarContext';
 
 export default function UpdateGuitar() {
-  const { guitars, updateGuitar } = useGuitars();
+  const { updateGuitar, getFilteredGuitars } = useGuitars();
   
   // State for search and form display
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,22 +35,18 @@ export default function UpdateGuitar() {
   const [formSubmitted, setFormSubmitted] = useState(false);
 
   // Handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    
-    if (query.length > 1) {
-      // Filter guitars based on name or manufacturer
-      const results = guitars.filter(guitar => 
-        guitar.name.toLowerCase().includes(query.toLowerCase()) || 
-        guitar.manufacturer.toLowerCase().includes(query.toLowerCase())
-      );
-      
-      setSearchResults(results);
-      setShowSearchResults(true);
-    } else {
-      setShowSearchResults(false);
-    }
+
+    // Fetch filtered guitars from the API
+    // Perform search even for single characters
+    const results = await getFilteredGuitars({ search: query });
+
+    console.log('Search results:', results); // Added logging
+    setSearchResults(results);
+    console.log('Show search results:', true); // Added logging
+    setShowSearchResults(true);
   };
 
   // Handle search result selection
@@ -73,7 +58,7 @@ export default function UpdateGuitar() {
       price: guitar.price,
     });
     setImagePreview(guitar.imageUrl || null);
-    setSearchQuery(`${guitar.manufacturer} ${guitar.name}`);
+    setSearchQuery(`${guitar.brand?.name || ''} ${guitar.model || ''}`);
     setShowSearchResults(false);
   };
 
@@ -138,8 +123,8 @@ export default function UpdateGuitar() {
       strings: formData.strings === '',
       condition: formData.condition === '',
       price: formData.price === '' || 
-             isNaN(Number(formData.price.replace(/[^\d.-]/g, ''))) || 
-             Number(formData.price.replace(/[^\d.-]/g, '')) <= 0,
+             isNaN(Number(String(formData.price).replace(/[^\d.-]/g, ''))) ||
+             Number(String(formData.price).replace(/[^\d.-]/g, '')) <= 0,
       image: imageError,
     };
     
@@ -176,7 +161,7 @@ export default function UpdateGuitar() {
       });
       
       // Update search query to reflect potential name changes
-      setSearchQuery(`${selectedGuitar.manufacturer} ${selectedGuitar.name}`);
+      setSearchQuery(`${selectedGuitar.manufacturer || ''} ${selectedGuitar.name || ''}`);
       
       // Show success message
       setFormSubmitted(true);
@@ -321,14 +306,14 @@ export default function UpdateGuitar() {
                     <div className="w-10 h-10 mr-3 relative flex-shrink-0">
                       <Image
                         src={guitar.imageUrl || "/guitar-placeholder.png"}
-                        alt={guitar.name}
+                        alt={guitar.name || "Guitar image"}
                         fill
                         style={{ objectFit: 'cover' }}
                         className="rounded"
                       />
                     </div>
                     <div>
-                      <div className="font-medium">{guitar.manufacturer} {guitar.name}</div>
+                      <div className="font-medium">{guitar.brand?.name} {guitar.model}</div>
                       <div className="text-sm text-gray-600">${guitar.price} - {guitar.condition}</div>
                     </div>
                   </div>
@@ -351,7 +336,7 @@ export default function UpdateGuitar() {
                 <div className="relative w-48 h-48 overflow-hidden rounded border border-gray-300 bg-white">
                   <Image 
                     src={selectedGuitar.imageUrl || "/guitar-placeholder.png"} 
-                    alt={selectedGuitar.name}
+                    alt={selectedGuitar.name || 'Guitar image'}
                     fill
                     style={{ objectFit: 'contain' }}
                     className="p-2"

@@ -3,22 +3,24 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useGuitars } from '../context/GuitarContext';
+import { useGuitars, Guitar } from '../context/GuitarContext';
 
 // Basic Guitar type (from context)
-type Guitar = {
-  id: string;
-  name: string;
-  manufacturer: string;
-  type: string;
-  strings: string;
-  condition: string;
-  price: string;
-  imageUrl?: string;
-};
+// Removed local type definition to use the one from context
+// type Guitar = {
+//   id: string;
+//   model: string;
+//   manufacturer: string;
+//   type: string;
+//   strings: string;
+//   condition: string;
+//   price: string;
+//   imageUrl?: string;
+// };
 
 // Extended type for display with price category
-type GuitarWithCategory = Guitar & {
+// Use the Guitar type from context
+type GuitarWithCategory = import('../context/GuitarContext').Guitar & {
   priceCategory: 'cheapest' | 'mostExpensive' | 'averagePrice' | null;
 };
 
@@ -105,7 +107,7 @@ export default function AllGuitars() {
           type: Object.entries(filters.type)
             .filter(([, value]) => value)
             .map(([key]) => key),
-          manufacturer: Object.entries(filters.manufacturer)
+          manufacturer: Object.entries(filters.manufacturer) // Keep filter state name as manufacturer for UI
             .filter(([, value]) => value)
             .map(([key]) => key),
           condition: Object.entries(filters.condition)
@@ -168,7 +170,8 @@ export default function AllGuitars() {
             else if (price === maxPrice) priceCategory = 'mostExpensive';
             else if (closestToAvg && guitar.id === closestToAvg.id) priceCategory = 'averagePrice';
 
-            return { ...guitar, priceCategory } as GuitarWithCategory;
+            // Ensure the model property is included
+            return { ...guitar, model: guitar.model, priceCategory } as GuitarWithCategory;
           });
 
           setDisplayGuitars(enhanced);
@@ -458,7 +461,7 @@ export default function AllGuitars() {
               <div className="relative w-full sm:w-64 md:w-80">
                 <input
                   type="text"
-                  placeholder="Search by name or manufacturer"
+                  placeholder="Search by model or manufacturer"
                   value={searchQuery}
                   onChange={handleSearchChange}
                   className="w-full pl-3 pr-10 py-2 border rounded-3xl border-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -524,7 +527,7 @@ export default function AllGuitars() {
                         {guitar.imageUrl ? (
                           <Image
                             src={guitar.imageUrl}
-                            alt={`${guitar.manufacturer} ${guitar.name}`}
+                            alt={`${guitar.brandName} ${guitar.model}`}
                             fill
                             style={{ objectFit: "contain" }}
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -547,7 +550,7 @@ export default function AllGuitars() {
                         style={getPriceCategoryStyle(guitar.priceCategory)}
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <h3 className="font-medium text-base leading-tight">{guitar.manufacturer} {guitar.name}</h3>
+                          <h3 className="font-medium text-base leading-tight">{guitar.brandName} {guitar.model}</h3>
                           <span className="font-bold text-lg">${guitar.price}</span>
                         </div>
                         <div className="text-sm text-gray-600 mb-2 space-y-0.5">

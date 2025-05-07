@@ -1,24 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react'; // Import useCallback
 import Link from 'next/link';
 import Image from 'next/image';
-import { useGuitars } from '../context/GuitarContext';
+import { useGuitars, Guitar } from '../context/GuitarContext';
 
-type Guitar = {
-  id: string;
-  name: string;
-  manufacturer: string;
-  type: string;
-  strings: string;
-  condition: string;
-  price: string;
-  imageUrl?: string;
-};
 
 export default function DeleteGuitar() {
   // Use guitars and deleteGuitar from context instead of local state
-  const { guitars, deleteGuitar } = useGuitars();
+  const { deleteGuitar, getFilteredGuitars, isLoading } = useGuitars(); // Add getFilteredGuitars and isLoading
 
   // State for search
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,73 +30,68 @@ export default function DeleteGuitar() {
   // Ref for the dropdown
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Update search results when search query changes
-  useEffect(() => {
+  // Fetch search results from API when search query changes
+  const fetchSearchResults = useCallback(async () => {
     if (searchQuery.trim() === '') {
       setSearchResults([]);
       setShowDropdown(false);
       return;
     }
 
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    const results = guitars.filter(guitar => {
-      const fullName = `${guitar.manufacturer} ${guitar.name}`.toLowerCase();
-      return fullName.includes(lowerCaseQuery);
-    });
+    try {
+      // Use getFilteredGuitars from context
+      const results = await getFilteredGuitars({ search: searchQuery });
+      setSearchResults(results);
 
-    // Only show dropdown if we have results and no guitar is selected
-    // or if the current search doesn't exactly match the selected guitar
-    if (results.length > 0) {
-      if (!selectedGuitar) {
-        setShowDropdown(true);
+      // Only show dropdown if we have results and no guitar is selected
+      // or if the current search doesn't exactly match the selected guitar
+      if (results.length > 0) {
+        if (!selectedGuitar) {
+          setShowDropdown(true);
+        } else {
+          const exactMatch = `${selectedGuitar.manufacturer} ${selectedGuitar.name}`.toLowerCase() === searchQuery.toLowerCase();
+          setShowDropdown(!exactMatch);
+        }
       } else {
-        const exactMatch = `${selectedGuitar.manufacturer} ${selectedGuitar.name}`.toLowerCase() === searchQuery.toLowerCase();
-        setShowDropdown(!exactMatch);
+        setShowDropdown(false);
       }
-    } else {
+
+    } catch (error) {
+      console.error('Error fetching search results:', error);
+      setSearchResults([]); // Clear results on error
       setShowDropdown(false);
     }
-    
-    setSearchResults(results);
-  }, [searchQuery, guitars, selectedGuitar]);
+  }, [searchQuery, getFilteredGuitars, selectedGuitar]); // Add dependencies
+
+  useEffect(() => {
+    fetchSearchResults();
+  }, [fetchSearchResults]); // Depend on the memoized fetchSearchResults function
 
   // Handle clicking outside the dropdown to close it
   useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setSearchResults([]);
-      setShowDropdown(false);
-      return;
-    }
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+          searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
 
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    const results = guitars.filter(guitar => {
-      const fullName = `${guitar.manufacturer} ${guitar.name}`.toLowerCase();
-      return fullName.includes(lowerCaseQuery);
-    });
-
-    let shouldShow = false;
-    if (results.length > 0) {
-        if (!selectedGuitar) {
-            shouldShow = true;
-        } else {
-            const exactMatch = `${selectedGuitar.manufacturer} ${selectedGuitar.name}`.toLowerCase() === searchQuery.toLowerCase();
-            shouldShow = !exactMatch;
-        }
-    }
-    setShowDropdown(shouldShow);
-    setSearchResults(results);
-
-}, [searchQuery, guitars, selectedGuitar]);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownRef, searchInputRef]); // Add refs as dependencies
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    setSelectedGuitar(null); // Clear selected guitar when search changes
   };
 
   // Handle selecting a guitar from the dropdown
   const handleSelectGuitar = (guitar: Guitar) => {
     setSelectedGuitar(guitar);
-    setSearchQuery(`${guitar.manufacturer} ${guitar.name}`);
+    setSearchQuery(`${guitar.brand?.name || ''} ${guitar.model || ''}`);
     setShowDropdown(false);
   };
 
@@ -114,6 +99,7 @@ export default function DeleteGuitar() {
   const handleClearSearch = () => {
     setSearchQuery('');
     setSelectedGuitar(null);
+    setSearchResults([]); // Clear search results
     setShowDropdown(false);
     if (searchInputRef.current) {
       searchInputRef.current.focus();
@@ -133,24 +119,34 @@ export default function DeleteGuitar() {
   };
 
   // Handle confirm delete
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => { // Make async
     if (!selectedGuitar) return;
-    
-    // Remove the guitar from the guitars array
-    deleteGuitar(selectedGuitar.id);
-    
-    // Show success message
-    setDeleteSuccess(true);
-    
-    // Reset states
-    setShowConfirmation(false);
-    setSelectedGuitar(null);
-    setSearchQuery('');
-    
-    // Hide success message after 3 seconds
-    setTimeout(() => {
-      setDeleteSuccess(false);
-    }, 3000);
+
+    try {
+      const success = await deleteGuitar(selectedGuitar.id); // Await deleteGuitar
+      if (success) {
+        // Show success message
+        setDeleteSuccess(true);
+
+        // Reset states
+        setShowConfirmation(false);
+        setSelectedGuitar(null);
+        setSearchQuery('');
+        setSearchResults([]); // Clear search results
+
+        // Hide success message after 3 seconds
+        setTimeout(() => {
+          setDeleteSuccess(false);
+        }, 3000);
+      } else {
+        // Handle deletion failure (optional: show an error message)
+        console.error('Failed to delete guitar');
+        setShowConfirmation(false); // Close confirmation even on failure
+      }
+    } catch (error) {
+      console.error('Error during guitar deletion:', error);
+      setShowConfirmation(false); // Close confirmation on error
+    }
   };
 
   return (
@@ -249,14 +245,33 @@ export default function DeleteGuitar() {
                 {searchResults.map((guitar) => (
                   <div
                     key={guitar.id}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
                     onClick={() => handleSelectGuitar(guitar)}
                   >
-                    <div className="font-medium">{guitar.manufacturer} {guitar.name}</div>
-                    <div className="text-sm text-gray-500">{guitar.type} · {guitar.condition}</div>
+                    {guitar.imageUrl && (
+                      <div className="relative w-10 h-10 mr-3">
+                        <Image
+                          src={guitar.imageUrl}
+                          alt={`${guitar.manufacturer} ${guitar.name}`}
+                          fill
+                          style={{ objectFit: "contain" }}
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <div className="font-medium">{guitar.brand?.name} {guitar.model}</div>
+                      <div className="text-sm text-gray-500">{guitar.type} · {guitar.condition}</div>
+                    </div>
                   </div>
                 ))}
               </div>
+            )}
+             {/* Loading or No Results Message */}
+             {isLoading && searchQuery.trim() !== '' && (
+                <div className="px-4 py-2 text-gray-500">Loading...</div>
+            )}
+            {!isLoading && searchQuery.trim() !== '' && searchResults.length === 0 && !showDropdown && (
+                <div className="px-4 py-2 text-gray-500">No guitars found.</div>
             )}
           </div>
           
@@ -310,9 +325,9 @@ export default function DeleteGuitar() {
             </Link>
             <button
               onClick={handleDeleteClick}
-              disabled={!selectedGuitar}
+              disabled={!selectedGuitar || isLoading} // Disable while loading
               className={`px-6 py-2 rounded-lg ${
-                selectedGuitar
+                selectedGuitar && !isLoading
                   ? 'bg-black text-white hover:bg-gray-900'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               } transition-colors`}
