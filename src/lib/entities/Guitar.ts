@@ -9,22 +9,19 @@ export class Guitar {
     @Column()
     model!: string;
 
-    @Column({ nullable: true })
-    year?: number;
+    @Column()
+    type!: string;
 
     @Column()
-    type!: string; // Added type
+    strings!: number;
 
     @Column()
-    strings!: number; // Changed strings to number
+    condition!: string;
 
-    @Column()
-    condition!: string; // Added condition
-
-    @Column("decimal", { precision: 10, scale: 2 }) // Added price as decimal
+    @Column("decimal", { precision: 10, scale: 2 })
     price!: number;
 
-    @Column({ nullable: true }) // Added imageUrl
+    @Column({ nullable: true })
     imageUrl?: string;
 
     @ManyToOne(() => Brand, brand => brand.guitars)

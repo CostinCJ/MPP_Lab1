@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGuitars } from '../../../lib/services/GuitarService'; // Import filtered and sorted guitars function
 import { createGuitar } from '../../../lib/services/GuitarService'; // Import create guitar function
-import { initializeDataSource } from '@/lib/database/data-source'; // Import initializeDataSource
+import { getInitializedDataSource } from '@/lib/database/data-source'; // Import getInitializedDataSource
 
 // GET - retrieve all guitars with optional filtering, sorting, and pagination
 export async function GET(request: NextRequest) {
     try {
-      await initializeDataSource(); // Initialize data source
+      await getInitializedDataSource(); // Ensure data source is initialized
       const { searchParams } = new URL(request.url);
 
       // Extract pagination parameters
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
         Object.keys(sort).length > 0 ? sort : undefined
       );
 
-      // Apply pagination (still needed as TypeORM find options don't directly support limit/offset in this way with relations and complex filters)
+      // Apply pagination
       const startIndex = (page - 1) * limit;
       const endIndex = page * limit;
       const paginatedGuitars = allGuitars.slice(startIndex, endIndex);
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
 // POST - create a new guitar
 export async function POST(request: NextRequest) {
     try {
-      await initializeDataSource(); // Initialize data source
+      await getInitializedDataSource(); // Ensure data source is initialized
       const guitarData = await request.json();
 
       // Validate required fields (adjust based on new Guitar entity)
@@ -138,7 +138,6 @@ export async function POST(request: NextRequest) {
       // Create the new guitar using the database service
       const newGuitar = await createGuitar({
           model: guitarData.model,
-          year: guitarData.year ? parseInt(guitarData.year) : undefined, // Assuming year is optional and can be a string
           brandName: guitarData.brandName,
           type: guitarData.type,
           strings: parseInt(guitarData.strings), // Ensure strings is a number
@@ -148,8 +147,14 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json(newGuitar, { status: 201 });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error in POST /api/guitars:', error);
+      if (error instanceof Error && error.message && error.message.toLowerCase().includes('already exist')) {
+        return NextResponse.json(
+          { error: error.message }, // Use the error message from the service
+          { status: 409 } // Conflict
+        );
+      }
       return NextResponse.json(
         { error: 'Failed to create guitar' },
         { status: 500 }

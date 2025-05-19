@@ -83,7 +83,7 @@ describe('AllGuitars Component', () => {
     expect(screen.getByText('Price Statistics')).toBeInTheDocument();
     
     // Check search and sort controls
-    expect(screen.getByPlaceholderText('Search by name or manufacturer')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search by model or manufacturer')).toBeInTheDocument();
     expect(screen.getByText('Price: Low to High')).toBeInTheDocument();
     expect(screen.getByText('Price: High to Low')).toBeInTheDocument();
   });

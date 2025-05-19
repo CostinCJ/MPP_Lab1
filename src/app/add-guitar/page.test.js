@@ -50,7 +50,7 @@ describe('AddGuitar Component', () => {
 
   test('renders the form with required fields', () => {
     expect(screen.getByText('Add Products')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Guitar Name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Guitar Model/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Manufacturer/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Type/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Strings/i)).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe('AddGuitar Component', () => {
 
   test('updates form fields when typing', () => {
     // Get form fields
-    const nameInput = screen.getByLabelText(/Guitar Name/i);
+    const nameInput = screen.getByLabelText(/Guitar Model/i);
     const manufacturerInput = screen.getByLabelText(/Manufacturer/i);
     const priceInput = screen.getByLabelText(/Price/i);
     

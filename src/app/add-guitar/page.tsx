@@ -154,8 +154,8 @@ export default function AddGuitar() {
       addGuitar({
         name: formData.model, // Map model to name
         manufacturer: formData.brandName, // Map brandName to manufacturer
-        model: formData.model, // Keep model for now, might be used elsewhere
-        brandName: formData.brandName, // Keep brandName for now, might be used elsewhere
+        model: formData.model,
+        brandName: formData.brandName,
         type: formData.type,
         strings: formData.strings,
         condition: formData.condition,

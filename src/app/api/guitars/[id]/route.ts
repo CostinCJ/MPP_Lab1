@@ -1,12 +1,12 @@
 // src/app/api/guitars/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  getGuitarById as getGuitarByIdFromService, // Alias to avoid name conflict
-  updateGuitar as updateGuitarFromService, // Alias to avoid name conflict
-  deleteGuitar as deleteGuitarFromService, // Alias to avoid name conflict
-  getGuitars as getAllGuitarsFromService // Alias to avoid name conflict
-} from '@/lib/services/GuitarService'; // Import from the database service
-import { initializeDataSource } from '@/lib/database/data-source'; // Import initializeDataSource
+  getGuitarById as getGuitarByIdFromService,
+  updateGuitar as updateGuitarFromService,
+  deleteGuitar as deleteGuitarFromService,
+  getGuitars as getAllGuitarsFromService
+} from '@/lib/services/GuitarService';
+import { getInitializedDataSource } from '@/lib/database/data-source';
 
 interface Params {
   params: {
@@ -17,7 +17,7 @@ interface Params {
 // GET handler - retrieve a specific guitar by ID
 export async function GET(request: NextRequest, { params }: Params) {
   try {
-    await initializeDataSource(); // Initialize data source
+    await getInitializedDataSource(); // Initialize data source
     const { id } = params;
     const guitarId = parseInt(id); // Convert id to number
 
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 // PATCH - update a specific guitar
 export async function PATCH(request: NextRequest, { params }: Params) {
     try {
-      await initializeDataSource(); // Initialize data source
+      await getInitializedDataSource(); // Initialize data source
       const { id } = params;
       const guitarId = parseInt(id); // Convert id to number
       const updates = await request.json();
@@ -120,7 +120,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
         if (isDuplicate) {
           return NextResponse.json(
-            { error: 'A guitar with this model and manufacturer already exists' }, // Updated error message
+            { error: 'A guitar with this model and manufacturer already exists' },
             { status: 409 }
           );
         }
@@ -149,7 +149,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 // DELETE - remove a specific guitar
 export async function DELETE(request: NextRequest, { params }: Params) {
     try {
-      await initializeDataSource(); // Initialize data source
+      await getInitializedDataSource(); // Initialize data source
       const { id } = params;
       const guitarId = parseInt(id); // Convert id to number
 

@@ -1,4 +1,4 @@
-import { AppDataSource, initializeDataSource } from "../database/data-source";
+import { AppDataSource, getInitializedDataSource } from "../database/data-source";
 import { Brand } from "@/lib/entities/Brand";
 import { Like, FindManyOptions, FindOptionsWhere, FindOptionsOrder } from "typeorm";
 
@@ -11,7 +11,7 @@ interface BrandSort {
 }
 
 export const getBrands = async (filter?: BrandFilter, sort?: BrandSort) => {
-    await initializeDataSource();
+    await getInitializedDataSource();
     const brandRepository = AppDataSource.getRepository(Brand);
 
     const findOptions: FindManyOptions<Brand> = {
@@ -35,13 +35,13 @@ export const getBrands = async (filter?: BrandFilter, sort?: BrandSort) => {
 };
 
 export const getBrandById = async (id: number) => {
-    await initializeDataSource();
+    await getInitializedDataSource();
     const brandRepository = AppDataSource.getRepository(Brand);
     return brandRepository.findOne({ where: { id } });
 };
 
 export const createBrand = async (brandData: { name: string }) => {
-    await initializeDataSource();
+    await getInitializedDataSource();
     const brandRepository = AppDataSource.getRepository(Brand);
 
     const newBrand = brandRepository.create({ name: brandData.name });
@@ -49,7 +49,7 @@ export const createBrand = async (brandData: { name: string }) => {
 };
 
 export const updateBrand = async (id: number, brandData: { name?: string }) => {
-    await initializeDataSource();
+    await getInitializedDataSource();
     const brandRepository = AppDataSource.getRepository(Brand);
 
     const brandToUpdate = await brandRepository.findOne({ where: { id } });
@@ -66,8 +66,8 @@ export const updateBrand = async (id: number, brandData: { name?: string }) => {
 };
 
 export const deleteBrand = async (id: number) => {
-    await initializeDataSource();
+    await getInitializedDataSource();
     const brandRepository = AppDataSource.getRepository(Brand);
     const result = await brandRepository.delete(id);
-    return result.affected !== null && result.affected !== undefined && result.affected > 0;
+    return (result.affected ?? 0) > 0;
 };

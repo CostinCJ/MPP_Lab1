@@ -9,8 +9,10 @@ jest.mock('../context/GuitarContext', () => {
       guitars: [
         {
           id: 'fender_strat_1',
-          name: 'Stratocaster',
-          manufacturer: 'Fender',
+          name: 'Stratocaster', // Keep for now, or decide if model/brandName are sole identifiers
+          model: 'Stratocaster',
+          manufacturer: 'Fender', // Keep for now
+          brandName: 'Fender',
           type: 'Electric',
           strings: '6',
           condition: 'New',
@@ -24,13 +26,33 @@ jest.mock('../context/GuitarContext', () => {
         return Promise.resolve({
           id,
           name: 'Stratocaster',
+          model: 'Stratocaster',
           manufacturer: 'Fender',
+          brandName: 'Fender',
           type: 'Electric',
           strings: '6',
           condition: 'New',
           price: '733',
           ...updates
         });
+      }),
+      getFilteredGuitars: jest.fn().mockImplementation(async (filters) => {
+        // Basic mock: return the sample guitar if search matches, or empty array
+        if (filters && filters.search && 'stratocaster'.includes(filters.search.toLowerCase())) {
+          return Promise.resolve([{
+            id: 'fender_strat_1',
+            name: 'Stratocaster',
+            model: 'Stratocaster',
+            manufacturer: 'Fender',
+            brandName: 'Fender',
+            type: 'Electric',
+            strings: '6',
+            condition: 'New',
+            price: '733',
+            imageUrl: '/fenderStratocaster.jpg'
+          }]);
+        }
+        return Promise.resolve([]);
       })
     })
   };

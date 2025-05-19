@@ -1,4 +1,4 @@
-import { AppDataSource, initializeDataSource } from "../database/data-source";
+import { AppDataSource, getInitializedDataSource } from "../database/data-source";
 import { Guitar } from "@/lib/entities/Guitar";
 import { Brand } from "@/lib/entities/Brand";
 import { Like, FindManyOptions, FindOptionsWhere, FindOptionsOrder, Between, In, MoreThanOrEqual, LessThanOrEqual } from "typeorm"; // Import MoreThanOrEqual and LessThanOrEqual
@@ -7,11 +7,12 @@ interface GuitarFilter {
     model?: string;
     year?: number;
     brandName?: string | string[];
+    condition?: string | string[];
     type?: string | string[];
     strings?: number | number[];
     minPrice?: number;
     maxPrice?: number;
-    search?: string; // Add search property
+    search?: string;
 }
 
 interface GuitarSort {
@@ -22,7 +23,7 @@ interface GuitarSort {
 }
 
 export const getGuitars = async (filter?: GuitarFilter, sort?: GuitarSort) => {
-    await initializeDataSource();
+    await getInitializedDataSource();
     const guitarRepository = AppDataSource.getRepository(Guitar);
 
     const findOptions: FindManyOptions<Guitar> = {
@@ -35,14 +36,14 @@ export const getGuitars = async (filter?: GuitarFilter, sort?: GuitarSort) => {
         if (filter.model) {
             (findOptions.where as FindOptionsWhere<Guitar>).model = Like(`%${filter.model}%`);
         }
-        if (filter.year) {
-            (findOptions.where as FindOptionsWhere<Guitar>).year = filter.year;
-        }
         if (filter.brandName) {
             (findOptions.where as FindOptionsWhere<Guitar>).brand = { name: Array.isArray(filter.brandName) ? In(filter.brandName) : Like(`%${filter.brandName}%`) };
         }
         if (filter.type) {
             (findOptions.where as FindOptionsWhere<Guitar>).type = Array.isArray(filter.type) ? In(filter.type) : filter.type;
+        }
+        if (filter.condition) {
+            (findOptions.where as FindOptionsWhere<Guitar>).condition = Array.isArray(filter.condition) ? In(filter.condition) : filter.condition;
         }
          if (filter.strings) {
             (findOptions.where as FindOptionsWhere<Guitar>).strings = Array.isArray(filter.strings) ? In(filter.strings) : filter.strings;
@@ -68,9 +69,6 @@ export const getGuitars = async (filter?: GuitarFilter, sort?: GuitarSort) => {
         if (sort.model) {
             (findOptions.order as FindOptionsOrder<Guitar>).model = sort.model;
         }
-        if (sort.year) {
-            (findOptions.order as FindOptionsOrder<Guitar>).year = sort.year;
-        }
         if (sort.brandName) {
             (findOptions.order as FindOptionsOrder<Guitar>).brand = { name: sort.brandName };
         }
@@ -83,13 +81,13 @@ export const getGuitars = async (filter?: GuitarFilter, sort?: GuitarSort) => {
 };
 
 export const getGuitarById = async (id: number) => {
-    await initializeDataSource();
+    await getInitializedDataSource();
     const guitarRepository = AppDataSource.getRepository(Guitar);
     return guitarRepository.findOne({ where: { id }, relations: ["brand"] });
 };
 
 export const createGuitar = async (guitarData: { model: string; year?: number; brandName?: string; type: string; strings: number; condition: string; price: number; imageUrl?: string }) => {
-    await initializeDataSource();
+    await getInitializedDataSource();
     const guitarRepository = AppDataSource.getRepository(Guitar);
     const brandRepository = AppDataSource.getRepository(Brand);
 
@@ -104,9 +102,6 @@ export const createGuitar = async (guitarData: { model: string; year?: number; b
 
     const newGuitar = new Guitar();
     newGuitar.model = guitarData.model;
-    if (guitarData.year !== undefined) {
-        newGuitar.year = guitarData.year;
-    }
     newGuitar.type = guitarData.type;
     newGuitar.strings = guitarData.strings;
     newGuitar.condition = guitarData.condition;
@@ -120,7 +115,7 @@ export const createGuitar = async (guitarData: { model: string; year?: number; b
 };
 
 export const updateGuitar = async (id: number, guitarData: { model?: string; year?: number; brandName?: string; type?: string; strings?: number; condition?: string; price?: number; imageUrl?: string }) => {
-    await initializeDataSource();
+    await getInitializedDataSource();
     const guitarRepository = AppDataSource.getRepository(Guitar);
     const brandRepository = AppDataSource.getRepository(Brand);
 
@@ -132,9 +127,6 @@ export const updateGuitar = async (id: number, guitarData: { model?: string; yea
 
     if (guitarData.model !== undefined) {
         guitarToUpdate.model = guitarData.model;
-    }
-    if (guitarData.year !== undefined) {
-        guitarToUpdate.year = guitarData.year;
     }
     if (guitarData.type !== undefined) {
         guitarToUpdate.type = guitarData.type;
@@ -167,7 +159,7 @@ export const updateGuitar = async (id: number, guitarData: { model?: string; yea
 };
 
 export const deleteGuitar = async (id: number) => {
-    await initializeDataSource();
+    await getInitializedDataSource();
     const guitarRepository = AppDataSource.getRepository(Guitar);
     const result = await guitarRepository.delete(id);
     return result.affected !== null && result.affected !== undefined && result.affected > 0;

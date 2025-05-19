@@ -1,5 +1,5 @@
 import { GET, POST } from './route';
-import * as guitarService from '@/app/lib/guitar-service';
+import * as guitarService from '@/lib/services/GuitarService'; // Corrected import path
 
 // Mock next/server
 jest.mock('next/server', () => ({
@@ -16,7 +16,12 @@ jest.mock('next/server', () => ({
 }));
 
 // Mock the guitar service module
-jest.mock('@/app/lib/guitar-service');
+jest.mock('@/lib/services/GuitarService'); // Corrected mock path
+
+// Mock the data source
+jest.mock('@/lib/database/data-source', () => ({
+  getInitializedDataSource: jest.fn().mockResolvedValue(undefined),
+}));
 
 describe('Guitars Collection API Route Handlers', () => {
   let mockRequest;
@@ -24,49 +29,57 @@ describe('Guitars Collection API Route Handlers', () => {
   const mockGuitars = [
     {
       id: 'guitar-1',
-      name: 'Stratocaster',
-      manufacturer: 'Fender',
+      model: 'Stratocaster',
+      brand: { name: 'Fender' }, // Align with entity structure
       type: 'Electric',
-      strings: '6',
+      strings: 6, // Align with entity type
       condition: 'New',
-      price: '1200',
+      price: 1200, // Align with entity type
       imageUrl: '/images/strat.jpg'
     },
     {
       id: 'guitar-2',
-      name: 'Les Paul',
-      manufacturer: 'Gibson',
+      model: 'Les Paul',
+      brand: { name: 'Gibson' },
       type: 'Electric',
-      strings: '6',
+      strings: 6,
       condition: 'Used',
-      price: '2500',
+      price: 2500,
       imageUrl: '/images/lespaul.jpg'
     },
     {
       id: 'guitar-3',
-      name: 'Telecaster',
-      manufacturer: 'Fender',
+      model: 'Telecaster',
+      brand: { name: 'Fender' },
       type: 'Electric',
-      strings: '6',
+      strings: 6,
       condition: 'Vintage',
-      price: '3000',
+      price: 3000,
       imageUrl: '/images/tele.jpg'
     }
   ];
   
+  // For POST, the API expects a flat structure, service handles brand relation
   const newGuitarData = {
-    name: 'New Guitar',
-    manufacturer: 'Test Brand',
+    model: 'New Model',
+    brandName: 'Test Brand', // API expects brandName for creation
     type: 'Electric',
-    strings: '6',
+    strings: 6, // API might expect string, service converts
     condition: 'New',
-    price: '800',
+    price: 800, // API might expect string, service converts
     imageUrl: '/images/new.jpg'
   };
 
+  // The created guitar returned by the service/API should be entity-like
   const createdGuitar = {
-    ...newGuitarData,
-    id: 'new-guitar-id'
+    id: 'new-guitar-id',
+    model: 'New Model',
+    brand: { name: 'Test Brand' }, // Align with entity structure
+    type: 'Electric',
+    strings: 6,
+    condition: 'New',
+    price: 800,
+    imageUrl: '/images/new.jpg'
   };
 
   beforeEach(() => {
@@ -83,14 +96,16 @@ describe('Guitars Collection API Route Handlers', () => {
   describe('GET handler', () => {
     it('should return all guitars with default pagination', async () => {
       // Mock implementation
-      guitarService.getFilteredAndSortedGuitars.mockResolvedValue(mockGuitars);
+      guitarService.getGuitars.mockResolvedValue(mockGuitars); // Changed to getGuitars
       
       // Execute the handler
       const response = await GET(mockRequest);
       const responseData = await response.json();
       
       // Assertions
-      expect(guitarService.getFilteredAndSortedGuitars).toHaveBeenCalledWith(undefined, { field: 'name', direction: 'asc' });
+      // The route itself applies default sort if not provided, so getGuitars might be called with undefined sort initially
+      // The route default sort is { model: 'ASC' }
+      expect(guitarService.getGuitars).toHaveBeenCalledWith(undefined, {"model": "ASC"});
       expect(response.status).toBe(200);
       expect(responseData.data).toEqual(mockGuitars.slice(0, 10)); // Default limit is 10
       expect(responseData.meta).toEqual({
@@ -109,19 +124,19 @@ describe('Guitars Collection API Route Handlers', () => {
       
       // Mock filtered results
       const filteredGuitars = [mockGuitars[0], mockGuitars[2]]; // Only Fender guitars
-      guitarService.getFilteredAndSortedGuitars.mockResolvedValue(filteredGuitars);
+      guitarService.getGuitars.mockResolvedValue(filteredGuitars); // Changed to getGuitars
       
       // Execute the handler
       const response = await GET(mockRequest);
       const responseData = await response.json();
       
       // Assertions
-      expect(guitarService.getFilteredAndSortedGuitars).toHaveBeenCalledWith(
-        { 
-          manufacturer: ['Fender'],
+      expect(guitarService.getGuitars).toHaveBeenCalledWith( // Changed to getGuitars
+        {
+          brandName: ['Fender'], // Changed manufacturer to brandName
           minPrice: 1000
         },
-        { field: 'name', direction: 'asc' }
+        { "model": "ASC" } // Default sort
       );
       expect(response.status).toBe(200);
       expect(responseData.data).toEqual(filteredGuitars);
@@ -137,16 +152,16 @@ describe('Guitars Collection API Route Handlers', () => {
         parseInt(b.price) - parseInt(a.price)
       );
       
-      guitarService.getFilteredAndSortedGuitars.mockResolvedValue(sortedGuitars);
+      guitarService.getGuitars.mockResolvedValue(sortedGuitars); // Changed to getGuitars
       
       // Execute the handler
       const response = await GET(mockRequest);
       const responseData = await response.json();
       
       // Assertions
-      expect(guitarService.getFilteredAndSortedGuitars).toHaveBeenCalledWith(
+      expect(guitarService.getGuitars).toHaveBeenCalledWith( // Changed to getGuitars
         undefined,
-        { field: 'price', direction: 'desc' }
+        { price: 'DESC' } // Sort object structure from route
       );
       expect(response.status).toBe(200);
       expect(responseData.data).toEqual(sortedGuitars);
@@ -155,15 +170,21 @@ describe('Guitars Collection API Route Handlers', () => {
     it('should handle pagination correctly', async () => {
       // Create a larger mock dataset for pagination
       const paginatedGuitars = Array(25).fill(null).map((_, i) => ({
-        ...mockGuitars[0],
         id: `guitar-${i+1}`,
-        name: `Guitar ${i+1}`
+        model: `Model ${i+1}`, // Use model
+        brand: { name: 'Fender' }, // Add brand object
+        type: 'Electric',
+        strings: 6,
+        condition: 'New',
+        price: 1200 + i,
+        imageUrl: `/images/strat-${i+1}.jpg`
       }));
       
       // Set up request with pagination params
       mockRequest.url = 'http://localhost:3000/api/guitars?page=2&limit=5';
       
-      guitarService.getFilteredAndSortedGuitars.mockResolvedValue(paginatedGuitars);
+      // Use mockImplementation with a deep clone to ensure data integrity
+      guitarService.getGuitars.mockImplementation(async () => JSON.parse(JSON.stringify(paginatedGuitars)));
       
       // Execute the handler
       const response = await GET(mockRequest);
@@ -208,7 +229,7 @@ describe('Guitars Collection API Route Handlers', () => {
 
     it('should return 500 when an error occurs', async () => {
       // Mock implementation - service throws error
-      guitarService.getFilteredAndSortedGuitars.mockRejectedValue(
+      guitarService.getGuitars.mockRejectedValueOnce( // Use mockRejectedValueOnce for specificity
         new Error('Database error')
       );
       
@@ -229,7 +250,7 @@ describe('Guitars Collection API Route Handlers', () => {
 
     it('should create a new guitar with valid data', async () => {
       // Mock implementations
-      guitarService.getAllGuitars.mockResolvedValue([]);
+      // guitarService.getAllGuitars.mockResolvedValue([]); // This is not called in the current POST route logic before createGuitar
       guitarService.createGuitar.mockResolvedValue(createdGuitar);
       
       // Execute the handler
@@ -237,7 +258,7 @@ describe('Guitars Collection API Route Handlers', () => {
       const responseData = await response.json();
       
       // Assertions
-      expect(guitarService.getAllGuitars).toHaveBeenCalled();
+      // expect(guitarService.getAllGuitars).toHaveBeenCalled(); // Removed this expectation
       expect(guitarService.createGuitar).toHaveBeenCalledWith(newGuitarData);
       expect(response.status).toBe(201);
       expect(responseData).toEqual(createdGuitar);
@@ -245,7 +266,7 @@ describe('Guitars Collection API Route Handlers', () => {
 
     it('should return 400 when required fields are missing', async () => {
       // Set up request with missing fields
-      const incompleteData = { name: 'Incomplete Guitar', manufacturer: 'Test' };
+      const incompleteData = { model: 'Incomplete Guitar' /* missing brandName, type etc. */ };
       mockRequest.json.mockResolvedValue(incompleteData);
       
       // Execute the handler
@@ -260,9 +281,18 @@ describe('Guitars Collection API Route Handlers', () => {
     });
 
     it('should return 400 when price is invalid', async () => {
-      // Set up request with invalid price
-      const invalidPriceData = { ...newGuitarData, price: '-100' };
-      mockRequest.json.mockResolvedValue(invalidPriceData);
+      // Set up request with invalid price, ensuring all other fields are valid and present
+      const invalidPriceData = {
+        model: 'Test Model Price', // Required
+        brandName: 'Test Brand Price', // Required by API for creation
+        type: 'Electric', // Required
+        strings: '6', // Required
+        condition: 'New', // Required
+        price: '-100', // Invalid price
+        imageUrl: '/images/new-price-test.jpg'
+      };
+      // Explicitly set the mock for this test case to ensure it overrides beforeEach
+      mockRequest.json = jest.fn().mockResolvedValue(invalidPriceData);
       
       // Execute the handler
       const response = await POST(mockRequest);
@@ -276,27 +306,17 @@ describe('Guitars Collection API Route Handlers', () => {
 
     it('should return 409 when guitar already exists', async () => {
       // Set up scenario where guitar already exists
-      const existingGuitars = [
-        {
-          id: 'existing-id',
-          name: newGuitarData.name,
-          manufacturer: newGuitarData.manufacturer,
-          type: 'Electric',
-          strings: '6',
-          condition: 'New',
-          price: '800'
-        }
-      ];
-      
-      guitarService.getAllGuitars.mockResolvedValue(existingGuitars);
+      // The route's POST handler now relies on createGuitar to throw an error for duplicates.
+      mockRequest.json = jest.fn().mockResolvedValue(newGuitarData); // Ensure correct payload for this test
+      guitarService.createGuitar.mockRejectedValue(new Error('A guitar with this name and manufacturer already exists'));
       
       // Execute the handler
       const response = await POST(mockRequest);
       const responseData = await response.json();
       
       // Assertions
-      expect(guitarService.createGuitar).not.toHaveBeenCalled();
-      expect(response.status).toBe(409);
+      expect(guitarService.createGuitar).toHaveBeenCalledWith(newGuitarData); // It will be called
+      expect(response.status).toBe(409); // Status code from the route's error handling
       expect(responseData).toEqual({ 
         error: 'A guitar with this name and manufacturer already exists' 
       });
@@ -304,9 +324,10 @@ describe('Guitars Collection API Route Handlers', () => {
 
     it('should return 500 when an error occurs', async () => {
       // Mock implementation - service throws error
-      guitarService.getAllGuitars.mockResolvedValue([]);
+      // guitarService.getAllGuitars.mockResolvedValue([]); // Not relevant for this error path
+      mockRequest.json = jest.fn().mockResolvedValue(newGuitarData); // Ensure correct payload for this test
       guitarService.createGuitar.mockRejectedValue(
-        new Error('Database error')
+        new Error('Database error') // Generic error
       );
       
       // Execute the handler

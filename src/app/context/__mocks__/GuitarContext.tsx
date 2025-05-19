@@ -8,6 +8,8 @@ type Guitar = {
   id: string;
   name: string;
   manufacturer: string;
+  model: string; // Added model
+  brandName: string; // Added brandName
   type: string;
   strings: string;
   condition: string;
@@ -21,6 +23,8 @@ const sampleGuitars: Guitar[] = [
     id: 'fender_strat_1',
     name: 'Stratocaster',
     manufacturer: 'Fender',
+    model: 'Stratocaster',
+    brandName: 'Fender',
     type: 'Electric',
     strings: '6',
     condition: 'New',
@@ -31,6 +35,8 @@ const sampleGuitars: Guitar[] = [
     id: 'ibanez_gio_1',
     name: 'Gio',
     manufacturer: 'Ibanez',
+    model: 'Gio',
+    brandName: 'Ibanez',
     type: 'Electric',
     strings: '6',
     condition: 'Used',
@@ -41,6 +47,8 @@ const sampleGuitars: Guitar[] = [
     id: 'gibson_sg_1',
     name: 'SG',
     manufacturer: 'Gibson',
+    model: 'SG',
+    brandName: 'Gibson',
     type: 'Electric',
     strings: '6',
     condition: 'New',
@@ -51,6 +59,8 @@ const sampleGuitars: Guitar[] = [
     id: 'gibson_lp_1',
     name: 'Les Paul \'60s',
     manufacturer: 'Gibson',
+    model: 'Les Paul \'60s',
+    brandName: 'Gibson',
     type: 'Electric',
     strings: '6',
     condition: 'Vintage',
@@ -61,6 +71,8 @@ const sampleGuitars: Guitar[] = [
     id: 'fender_squier_1',
     name: 'Squier',
     manufacturer: 'Fender',
+    model: 'Squier',
+    brandName: 'Fender',
     type: 'Electric',
     strings: '6',
     condition: 'Used',
@@ -71,6 +83,8 @@ const sampleGuitars: Guitar[] = [
     id: 'ibanez_grg_1',
     name: 'GRG170DX',
     manufacturer: 'Ibanez',
+    model: 'GRG170DX',
+    brandName: 'Ibanez',
     type: 'Electric',
     strings: '6',
     condition: 'New',
