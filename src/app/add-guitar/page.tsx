@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useGuitars } from '../context/GuitarContext';
+import { useGuitars, type Guitar } from '../context/GuitarContext'; // Import Guitar type
 
 export default function AddGuitar() {
   // Get guitars and addGuitar function from context
@@ -126,7 +126,7 @@ export default function AddGuitar() {
       const isDuplicate = guitars.some(
         guitar =>
           guitar.model.toLowerCase() === formData.model.toLowerCase() &&
-          guitar.brandName.toLowerCase() === formData.brandName.toLowerCase()
+          guitar.brand?.name?.toLowerCase() === formData.brandName.toLowerCase()
       );
       
       if (isDuplicate) {
@@ -151,9 +151,8 @@ export default function AddGuitar() {
       const imageUrl = imagePreview || '/guitar-placeholder.png';
       
       // Add to shared context instead of local state
-      addGuitar({
-        name: formData.model, // Map model to name
-        manufacturer: formData.brandName, // Map brandName to manufacturer
+      // Construct the payload for the API based on what it expects
+      const apiPayload = {
         model: formData.model,
         brandName: formData.brandName,
         type: formData.type,
@@ -161,7 +160,9 @@ export default function AddGuitar() {
         condition: formData.condition,
         price: formData.price,
         imageUrl
-      });
+      };
+      
+      addGuitar(apiPayload as Omit<Guitar, 'id'>);
       
       // Reset form
       setFormData({

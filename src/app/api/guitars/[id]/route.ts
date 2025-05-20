@@ -8,17 +8,13 @@ import {
 } from '@/lib/services/GuitarService';
 import { getInitializedDataSource } from '@/lib/database/data-source';
 
-interface Params {
-  params: {
-    id: string;
-  };
-}
-
 // GET handler - retrieve a specific guitar by ID
-export async function GET(request: NextRequest, { params }: Params) {
+export async function GET(request: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  let id: string | undefined;
   try {
     await getInitializedDataSource(); // Initialize data source
-    const { id } = params;
+    const resolvedParams = await paramsPromise;
+    id = resolvedParams.id;
     const guitarId = parseInt(id); // Convert id to number
 
     if (isNaN(guitarId)) {
@@ -40,7 +36,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     return NextResponse.json(guitar);
   } catch (error) {
-    console.error(`Error in GET /api/guitars/${params.id}:`, error);
+    console.error(`Error in GET /api/guitars/${id}:`, error);
     return NextResponse.json(
       { error: 'Failed to retrieve guitar' },
       { status: 500 }
@@ -49,10 +45,12 @@ export async function GET(request: NextRequest, { params }: Params) {
 }
 
 // PATCH - update a specific guitar
-export async function PATCH(request: NextRequest, { params }: Params) {
+export async function PATCH(request: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+    let id: string | undefined;
     try {
       await getInitializedDataSource(); // Initialize data source
-      const { id } = params;
+      const resolvedParams = await paramsPromise;
+      id = resolvedParams.id;
       const guitarId = parseInt(id); // Convert id to number
       const updates = await request.json();
 
@@ -138,7 +136,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
       return NextResponse.json(updatedGuitar);
     } catch (error) {
-      console.error(`Error in PATCH /api/guitars/${params.id}:`, error);
+      console.error(`Error in PATCH /api/guitars/${id}:`, error);
       return NextResponse.json(
         { error: 'Failed to update guitar' },
         { status: 500 }
@@ -147,10 +145,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 }
 
 // DELETE - remove a specific guitar
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
+    let id: string | undefined;
     try {
       await getInitializedDataSource(); // Initialize data source
-      const { id } = params;
+      const resolvedParams = await paramsPromise;
+      id = resolvedParams.id;
       const guitarId = parseInt(id); // Convert id to number
 
       if (isNaN(guitarId)) {
@@ -183,7 +183,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       // Return no content for successful deletion
       return new NextResponse(null, { status: 204 });
     } catch (error) {
-      console.error(`Error in DELETE /api/guitars/${params.id}:`, error);
+      console.error(`Error in DELETE /api/guitars/${id}:`, error);
       return NextResponse.json(
         { error: 'Failed to delete guitar' },
         { status: 500 }

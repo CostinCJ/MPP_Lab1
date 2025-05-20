@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "next": "15.2.4",
+    "pg": "^8.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sqlite3": "^5.1.7",
@@ -37,5 +38,8 @@
     "typescript": "^5",
     "undici": "^7.8.0",
     "whatwg-fetch": "^3.6.20"
+  },
+  "browser": {
+    "typeorm": false
   }
 }

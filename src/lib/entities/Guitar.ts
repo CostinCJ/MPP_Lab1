@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 import { Brand } from "./Brand";
 
-@Entity()
+@Entity("guitar")
 export class Guitar {
     @PrimaryGeneratedColumn()
     id!: number;
@@ -21,7 +21,7 @@ export class Guitar {
     @Column("decimal", { precision: 10, scale: 2 })
     price!: number;
 
-    @Column({ nullable: true })
+    @Column({ type: "text", nullable: true })
     imageUrl?: string;
 
     @ManyToOne(() => Brand, brand => brand.guitars)

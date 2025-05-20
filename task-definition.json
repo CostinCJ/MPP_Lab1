@@ -1,0 +1,44 @@
+{
+  "family": "string-tracker-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::013249835197:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "string-tracker-container",
+      "image": "013249835197.dkr.ecr.eu-central-1.amazonaws.com/string_tracker:latest",
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3000" },
+        { "name": "POSTGRES_HOST", "value": "guitars-db.crqwamig0xuq.eu-central-1.rds.amazonaws.com" },
+        { "name": "POSTGRES_PORT", "value": "5432" },
+        { "name": "POSTGRES_USER", "value": "postgres" },
+        { "name": "POSTGRES_DB", "value": "guitars_db" }
+      ],
+      "secrets": [
+        {
+          "name": "POSTGRES_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:eu-central-1:013249835197:secret:prod/guitar-db/postgres-credentials-AEbcDB"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/string-tracker-task",
+          "awslogs-region": "eu-central-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

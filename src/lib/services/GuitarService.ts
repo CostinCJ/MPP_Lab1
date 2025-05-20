@@ -1,7 +1,7 @@
 import { AppDataSource, getInitializedDataSource } from "../database/data-source";
 import { Guitar } from "@/lib/entities/Guitar";
 import { Brand } from "@/lib/entities/Brand";
-import { Like, FindManyOptions, FindOptionsWhere, FindOptionsOrder, Between, In, MoreThanOrEqual, LessThanOrEqual } from "typeorm"; // Import MoreThanOrEqual and LessThanOrEqual
+import { ILike, FindManyOptions, FindOptionsWhere, FindOptionsOrder, Between, In, MoreThanOrEqual, LessThanOrEqual } from "typeorm"; // Import MoreThanOrEqual and LessThanOrEqual
 
 interface GuitarFilter {
     model?: string;
@@ -34,10 +34,10 @@ export const getGuitars = async (filter?: GuitarFilter, sort?: GuitarSort) => {
 
     if (filter) {
         if (filter.model) {
-            (findOptions.where as FindOptionsWhere<Guitar>).model = Like(`%${filter.model}%`);
+            (findOptions.where as FindOptionsWhere<Guitar>).model = ILike(`%${filter.model}%`);
         }
         if (filter.brandName) {
-            (findOptions.where as FindOptionsWhere<Guitar>).brand = { name: Array.isArray(filter.brandName) ? In(filter.brandName) : Like(`%${filter.brandName}%`) };
+            (findOptions.where as FindOptionsWhere<Guitar>).brand = { name: Array.isArray(filter.brandName) ? In(filter.brandName) : ILike(`%${filter.brandName}%`) };
         }
         if (filter.type) {
             (findOptions.where as FindOptionsWhere<Guitar>).type = Array.isArray(filter.type) ? In(filter.type) : filter.type;
@@ -59,8 +59,8 @@ export const getGuitars = async (filter?: GuitarFilter, sort?: GuitarSort) => {
          if (filter.search) {
              // Apply search filter to model and brand name
              (findOptions.where as FindOptionsWhere<Guitar> | FindOptionsWhere<Guitar>[]) = [
-                 { model: Like(`%${filter.search}%`) },
-                 { brand: { name: Like(`%${filter.search}%`) } }
+                 { model: ILike(`%${filter.search}%`) },
+                 { brand: { name: ILike(`%${filter.search}%`) } }
              ];
          }
      }
@@ -87,31 +87,74 @@ export const getGuitarById = async (id: number) => {
 };
 
 export const createGuitar = async (guitarData: { model: string; year?: number; brandName?: string; type: string; strings: number; condition: string; price: number; imageUrl?: string }) => {
-    await getInitializedDataSource();
-    const guitarRepository = AppDataSource.getRepository(Guitar);
-    const brandRepository = AppDataSource.getRepository(Brand);
+    console.log("GuitarService: createGuitar called with guitarData:", JSON.stringify(guitarData, null, 2));
+    const dataSource = await getInitializedDataSource();
+    const guitarRepository = dataSource.getRepository(Guitar);
+    const brandRepository = dataSource.getRepository(Brand);
 
-    let brand = null;
-    if (guitarData.brandName) {
-        brand = await brandRepository.findOne({ where: { name: guitarData.brandName } });
-        if (!brand) {
-            brand = brandRepository.create({ name: guitarData.brandName });
-            await brandRepository.save(brand);
+    if (!guitarData.brandName) {
+        console.error("GuitarService: Brand name is missing in guitarData.");
+        throw new Error("Brand name is required to create a guitar.");
+    }
+    console.log(`GuitarService: Attempting to find or create brand: ${guitarData.brandName}`);
+
+    let brandToAssociate: Brand;
+    const existingBrand = await brandRepository.findOne({ where: { name: guitarData.brandName } });
+    if (!existingBrand) {
+        console.log(`GuitarService: Brand "${guitarData.brandName}" not found. Creating new brand.`);
+        const newBrandInstance = brandRepository.create({ name: guitarData.brandName });
+        brandToAssociate = await brandRepository.save(newBrandInstance);
+        console.log("GuitarService: New brand saved. brandToAssociate:", JSON.stringify(brandToAssociate, null, 2));
+    } else {
+        console.log(`GuitarService: Existing brand found:`, JSON.stringify(existingBrand, null, 2));
+        brandToAssociate = existingBrand;
+    }
+
+    console.log("GuitarService: Final brandToAssociate ID before guitar creation:", brandToAssociate.id);
+
+    const valuesToInsert: Partial<Guitar> = {
+        model: guitarData.model,
+        type: guitarData.type,
+        strings: guitarData.strings,
+        condition: guitarData.condition,
+        price: guitarData.price,
+        imageUrl: guitarData.imageUrl,
+        brand: { id: brandToAssociate.id } as Brand
+    };
+
+    console.log("GuitarService: Values for guitar insertion:", JSON.stringify(valuesToInsert, null, 2));
+
+    try {
+        console.log("GuitarService: Attempting to insert new guitar using QueryBuilder...");
+        const insertResult = await guitarRepository.createQueryBuilder()
+            .insert()
+            .into(Guitar)
+            .values(valuesToInsert)
+            .execute();
+        
+        console.log("GuitarService: Guitar inserted successfully with QueryBuilder. Result:", JSON.stringify(insertResult, null, 2));
+
+        if (insertResult.identifiers && insertResult.identifiers.length > 0 && insertResult.identifiers[0].id) {
+            const newGuitarId = insertResult.identifiers[0].id;
+            console.log(`GuitarService: New guitar ID: ${newGuitarId}. Fetching the created guitar...`);
+            const createdGuitar = await getGuitarById(newGuitarId);
+            if (!createdGuitar) {
+                 console.error(`GuitarService: Failed to fetch newly created guitar with ID: ${newGuitarId}`);
+                 throw new Error(`Failed to fetch newly created guitar with ID: ${newGuitarId}`);
+            }
+            console.log("GuitarService: Successfully fetched created guitar:", JSON.stringify(createdGuitar, null, 2));
+            return createdGuitar;
+        } else {
+            console.error("GuitarService: Insert operation did not return a valid ID.");
+            throw new Error("Guitar creation failed to return an ID.");
         }
-    }
 
-    const newGuitar = new Guitar();
-    newGuitar.model = guitarData.model;
-    newGuitar.type = guitarData.type;
-    newGuitar.strings = guitarData.strings;
-    newGuitar.condition = guitarData.condition;
-    newGuitar.price = guitarData.price;
-    if (guitarData.imageUrl !== undefined) {
-        newGuitar.imageUrl = guitarData.imageUrl;
+    } catch (error) {
+        console.error(`Error during guitar insert process (Brand ID: ${brandToAssociate?.id || 'unknown'}):`, error);
+        console.error("GuitarService: Guitar data at time of failure:", JSON.stringify(valuesToInsert, null, 2));
+        console.error("GuitarService: Brand object intended for association:", JSON.stringify(brandToAssociate, null, 2));
+        throw error;
     }
-    newGuitar.brand = brand as Brand;
-
-    return guitarRepository.save(newGuitar);
 };
 
 export const updateGuitar = async (id: number, guitarData: { model?: string; year?: number; brandName?: string; type?: string; strings?: number; condition?: string; price?: number; imageUrl?: string }) => {
@@ -149,9 +192,9 @@ export const updateGuitar = async (id: number, guitarData: { model?: string; yea
         let brand = await brandRepository.findOne({ where: { name: guitarData.brandName } });
         if (!brand) {
             brand = brandRepository.create({ name: guitarData.brandName });
-            await brandRepository.save(brand);
+            brand = await brandRepository.save(brand);
         }
-        guitarToUpdate.brand = brand;
+        guitarToUpdate.brand = { id: brand.id } as Brand;
     }
 
 
