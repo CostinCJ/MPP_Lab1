@@ -1,8 +1,8 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { Guitar } from "../entities/Guitar";
-
 import { Brand } from "../entities/Brand";
+import { User } from "../entities/User";
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -11,9 +11,9 @@ export const AppDataSource = new DataSource({
     username: process.env.POSTGRES_USER || "postgres",
     password: process.env.POSTGRES_PASSWORD || "1234",
     database: process.env.POSTGRES_DB || "guitars_db",
-    synchronize: process.env.NODE_ENV === 'development',
+    synchronize: false,
     logging: true,
-    entities: [Guitar, Brand],
+    entities: [Guitar, Brand, User],
     migrations: [__dirname + '/migrations/*{.ts,.js}'],
     subscribers: [],
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
@@ -24,7 +24,7 @@ let initializePromise: Promise<DataSource> | null = null;
 // Function to get the initialized data source
 export const getInitializedDataSource = async (): Promise<DataSource> => {
     if (!AppDataSource.isInitialized) {
-        if (!initializePromise) { // Avoid multiple initialization attempts
+        if (!initializePromise) { 
             initializePromise = AppDataSource.initialize()
                 .then(() => {
                     console.log("Data Source has been initialized!");

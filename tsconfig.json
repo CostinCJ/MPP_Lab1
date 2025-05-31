@@ -24,6 +24,11 @@
       "@/*": ["./src/*"]
     }
   },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
+  },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/add-guitar/page.test.js", "src/app/api/guitars/route.test.js"],
   "exclude": ["node_modules"]
 }

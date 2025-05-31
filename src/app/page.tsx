@@ -1,7 +1,12 @@
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 
 export default function Home() {
+  const { data: session, status } = useSession();
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
       {/* Navigation Bar */}
@@ -30,18 +35,29 @@ export default function Home() {
           </div>
           
           <div className="flex space-x-3">
-            <Link 
-              href="/signin" 
-              className="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800"
-            >
-              Sign in
-            </Link>
-            <Link 
-              href="/register" 
-              className="px-3 py-1 rounded-lg bg-black text-white hover:bg-gray-900 !text-white"
-            >
-              Register
-            </Link>
+            {status === "authenticated" ? (
+              <button
+                onClick={() => signOut({ callbackUrl: '/' })}
+                className="px-3 py-1 rounded-lg bg-gray-700 hover:bg-gray-800 text-white"
+              >
+                Log out
+              </button>
+            ) : (
+              <>
+                <Link
+                  href="/auth/signin"
+                  className="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="px-3 py-1 rounded-lg bg-black text-white hover:bg-gray-900 !text-white"
+                >
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>

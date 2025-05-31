@@ -7,11 +7,19 @@ import {
   getGuitars as getAllGuitarsFromService
 } from '@/lib/services/GuitarService';
 import { getInitializedDataSource } from '@/lib/database/data-source';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // GET handler - retrieve a specific guitar by ID
 export async function GET(request: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
   let id: string | undefined;
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await getInitializedDataSource(); // Initialize data source
     const resolvedParams = await paramsPromise;
     id = resolvedParams.id;
@@ -34,6 +42,11 @@ export async function GET(request: NextRequest, { params: paramsPromise }: { par
       );
     }
 
+    // Check if the guitar belongs to the logged-in user
+    if (guitar.userId !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     return NextResponse.json(guitar);
   } catch (error) {
     console.error(`Error in GET /api/guitars/${id}:`, error);
@@ -48,6 +61,12 @@ export async function GET(request: NextRequest, { params: paramsPromise }: { par
 export async function PATCH(request: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     let id: string | undefined;
     try {
+      const session = await getServerSession(authOptions);
+      if (!session || !session.user || !session.user.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const userId = session.user.id;
+
       await getInitializedDataSource(); // Initialize data source
       const resolvedParams = await paramsPromise;
       id = resolvedParams.id;
@@ -69,6 +88,11 @@ export async function PATCH(request: NextRequest, { params: paramsPromise }: { p
           { error: 'Guitar not found' },
           { status: 404 }
         );
+      }
+
+      // Check if the guitar belongs to the logged-in user
+      if (existingGuitar.userId !== userId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
       // Check if there are any updates
@@ -148,6 +172,12 @@ export async function PATCH(request: NextRequest, { params: paramsPromise }: { p
 export async function DELETE(request: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
     let id: string | undefined;
     try {
+      const session = await getServerSession(authOptions);
+      if (!session || !session.user || !session.user.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const userId = session.user.id;
+
       await getInitializedDataSource(); // Initialize data source
       const resolvedParams = await paramsPromise;
       id = resolvedParams.id;
@@ -168,6 +198,11 @@ export async function DELETE(request: NextRequest, { params: paramsPromise }: { 
           { error: 'Guitar not found' },
           { status: 404 }
         );
+      }
+
+      // Check if the guitar belongs to the logged-in user
+      if (existingGuitar.userId !== userId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
       // Delete the guitar using the database service

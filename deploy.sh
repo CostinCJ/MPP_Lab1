@@ -95,6 +95,5 @@ fi
 echo "---------------------------------------------------------------------"
 echo "Deployment script finished."
 echo "Application successfully deployed."
-echo "Access your application at: http://${PUBLIC_IP}:3000"
-echo "Access your safe application at: https://string-tracker-inventory.online"
+echo "Access your application at: https://string-tracker-inventory.online"
 echo "---------------------------------------------------------------------"

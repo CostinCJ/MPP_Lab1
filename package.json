@@ -8,10 +8,21 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/lib/database/data-source.ts",
+    "typeorm:create": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "migration:generate": "npm run typeorm -- migration:generate",
+    "migration:create": "npm run typeorm:create -- migration:create",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert"
   },
   "dependencies": {
+    "@auth/typeorm-adapter": "^2.9.1",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.2",
+    "class-validator": "^0.14.2",
     "next": "15.2.4",
+    "next-auth": "^4.24.11",
     "pg": "^8.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -35,6 +46,8 @@
     "jest-localstorage-mock": "^2.4.26",
     "jest-watch-typeahead": "^2.2.2",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5",
     "undici": "^7.8.0",
     "whatwg-fetch": "^3.6.20"

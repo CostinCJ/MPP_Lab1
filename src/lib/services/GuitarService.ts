@@ -13,6 +13,7 @@ interface GuitarFilter {
     minPrice?: number;
     maxPrice?: number;
     search?: string;
+    userId?: string;
 }
 
 interface GuitarSort {
@@ -28,42 +29,53 @@ export const getGuitars = async (filter?: GuitarFilter, sort?: GuitarSort) => {
 
     const findOptions: FindManyOptions<Guitar> = {
         relations: ["brand"],
-        where: {},
+        where: undefined, // Initialize as undefined, will be set based on filters
         order: {}
     };
 
+    const activeWhereConditions: FindOptionsWhere<Guitar> = {};
+
     if (filter) {
-        if (filter.model) {
-            (findOptions.where as FindOptionsWhere<Guitar>).model = ILike(`%${filter.model}%`);
-        }
-        if (filter.brandName) {
-            (findOptions.where as FindOptionsWhere<Guitar>).brand = { name: Array.isArray(filter.brandName) ? In(filter.brandName) : ILike(`%${filter.brandName}%`) };
+        if (filter.userId) {
+            activeWhereConditions.userId = filter.userId;
         }
         if (filter.type) {
-            (findOptions.where as FindOptionsWhere<Guitar>).type = Array.isArray(filter.type) ? In(filter.type) : filter.type;
+            activeWhereConditions.type = Array.isArray(filter.type) ? In(filter.type) : filter.type;
         }
         if (filter.condition) {
-            (findOptions.where as FindOptionsWhere<Guitar>).condition = Array.isArray(filter.condition) ? In(filter.condition) : filter.condition;
+            activeWhereConditions.condition = Array.isArray(filter.condition) ? In(filter.condition) : filter.condition;
         }
-         if (filter.strings) {
-            (findOptions.where as FindOptionsWhere<Guitar>).strings = Array.isArray(filter.strings) ? In(filter.strings) : filter.strings;
+        if (filter.strings) {
+            activeWhereConditions.strings = Array.isArray(filter.strings) ? In(filter.strings) : filter.strings;
         }
         if (filter.minPrice !== undefined && filter.maxPrice !== undefined) {
-             (findOptions.where as FindOptionsWhere<Guitar>).price = Between(filter.minPrice, filter.maxPrice);
+            activeWhereConditions.price = Between(filter.minPrice, filter.maxPrice);
         } else if (filter.minPrice !== undefined) {
-             (findOptions.where as FindOptionsWhere<Guitar>).price = MoreThanOrEqual(filter.minPrice);
+            activeWhereConditions.price = MoreThanOrEqual(filter.minPrice);
         } else if (filter.maxPrice !== undefined) {
-             (findOptions.where as FindOptionsWhere<Guitar>).price = LessThanOrEqual(filter.maxPrice);
+            activeWhereConditions.price = LessThanOrEqual(filter.maxPrice);
         }
- 
-         if (filter.search) {
-             // Apply search filter to model and brand name
-             (findOptions.where as FindOptionsWhere<Guitar> | FindOptionsWhere<Guitar>[]) = [
-                 { model: ILike(`%${filter.search}%`) },
-                 { brand: { name: ILike(`%${filter.search}%`) } }
-             ];
-         }
-     }
+
+        if (filter.search) {
+            // If search is active, combine it with other activeWhereConditions
+            // This means: (activeWhereConditions) AND (model LIKE search OR brand.name LIKE search)
+            findOptions.where = [
+                { ...activeWhereConditions, model: ILike(`%${filter.search}%`) },
+                { ...activeWhereConditions, brand: { name: ILike(`%${filter.search}%`) } }
+            ];
+        } else {
+            // If no global search, apply specific model and brandName filters if they exist
+            if (filter.model) {
+                activeWhereConditions.model = ILike(`%${filter.model}%`);
+            }
+            if (filter.brandName) {
+                activeWhereConditions.brand = { name: Array.isArray(filter.brandName) ? In(filter.brandName) : ILike(`%${filter.brandName}%`) };
+            }
+            if (Object.keys(activeWhereConditions).length > 0) {
+                findOptions.where = activeWhereConditions;
+            }
+        }
+    }
 
     if (sort) {
         if (sort.model) {
@@ -86,7 +98,7 @@ export const getGuitarById = async (id: number) => {
     return guitarRepository.findOne({ where: { id }, relations: ["brand"] });
 };
 
-export const createGuitar = async (guitarData: { model: string; year?: number; brandName?: string; type: string; strings: number; condition: string; price: number; imageUrl?: string }) => {
+export const createGuitar = async (guitarData: { model: string; year?: number; brandName?: string; type: string; strings: number; condition: string; price: number; imageUrl?: string; userId: string; }) => {
     console.log("GuitarService: createGuitar called with guitarData:", JSON.stringify(guitarData, null, 2));
     const dataSource = await getInitializedDataSource();
     const guitarRepository = dataSource.getRepository(Guitar);
@@ -119,7 +131,8 @@ export const createGuitar = async (guitarData: { model: string; year?: number; b
         condition: guitarData.condition,
         price: guitarData.price,
         imageUrl: guitarData.imageUrl,
-        brand: { id: brandToAssociate.id } as Brand
+        brand: { id: brandToAssociate.id } as Brand,
+        userId: guitarData.userId
     };
 
     console.log("GuitarService: Values for guitar insertion:", JSON.stringify(valuesToInsert, null, 2));

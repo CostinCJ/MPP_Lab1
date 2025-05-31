@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react'; // Import useCallback
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useGuitars, Guitar } from '../context/GuitarContext';
+import ProtectedPage from '../components/ProtectedPage';
+import { signOut } from 'next-auth/react';
 
 
 export default function DeleteGuitar() {
   // Use guitars and deleteGuitar from context instead of local state
-  const { deleteGuitar, getFilteredGuitars, isLoading } = useGuitars(); // Add getFilteredGuitars and isLoading
+  const { deleteGuitar, getFilteredGuitars, isLoading } = useGuitars();
 
   // State for search
   const [searchQuery, setSearchQuery] = useState('');
@@ -150,9 +152,10 @@ export default function DeleteGuitar() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-black">
-      {/* Navigation Bar */}
-      <nav className="flex justify-between items-center px-4 py-3 border-b">
+    <ProtectedPage>
+      <div className="min-h-screen flex flex-col bg-white text-black">
+        {/* Navigation Bar */}
+        <nav className="flex justify-between items-center px-4 py-3 border-b">
         <Link href="/" className="flex items-center">
           <Image 
             src="/guitar-icon.png" 
@@ -177,18 +180,13 @@ export default function DeleteGuitar() {
           </div>
           
           <div className="flex space-x-3">
-            <Link 
-              href="/signin" 
-              className="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800"
+            {/* Since this page is protected, user is always authenticated here */}
+            <button
+              onClick={() => signOut({ callbackUrl: '/' })} // Redirect to home after sign out
+              className="px-3 py-1 rounded-lg bg-gray-700 hover:bg-gray-800 text-white"
             >
-              Sign in
-            </Link>
-            <Link 
-              href="/register" 
-              className="px-3 py-1 rounded-lg bg-black text-white hover:bg-gray-900 !text-white"
-            >
-              Register
-            </Link>
+              Log out
+            </button>
           </div>
         </div>
       </nav>
@@ -388,5 +386,6 @@ export default function DeleteGuitar() {
     </div>
     </footer>
     </div>
+    </ProtectedPage>
     );
 }

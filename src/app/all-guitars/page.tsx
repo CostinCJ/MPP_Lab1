@@ -4,22 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useGuitars, Guitar } from '../context/GuitarContext';
+import ProtectedPage from '../components/ProtectedPage';
+import { signOut } from 'next-auth/react';
 
-// Basic Guitar type (from context)
-// Removed local type definition to use the one from context
-// type Guitar = {
-//   id: string;
-//   model: string;
-//   manufacturer: string;
-//   type: string;
-//   strings: string;
-//   condition: string;
-//   price: string;
-//   imageUrl?: string;
-// };
-
-// Extended type for display with price category
-// Use the Guitar type from context
 type GuitarWithCategory = import('../context/GuitarContext').Guitar & {
   priceCategory: 'cheapest' | 'mostExpensive' | 'averagePrice' | null;
 };
@@ -266,9 +253,10 @@ export default function AllGuitars() {
 
   // Render Logic
   return (
-    <div className="min-h-screen flex flex-col bg-white text-black">
-      {/* Navigation Bar */}
-      <nav className="flex justify-between items-center px-4 py-3 border-b">
+    <ProtectedPage>
+      <div className="min-h-screen flex flex-col bg-white text-black">
+        {/* Navigation Bar */}
+        <nav className="flex justify-between items-center px-4 py-3 border-b">
         <Link href="/" className="flex items-center">
           <Image
             src="/guitar-icon.png"
@@ -293,18 +281,13 @@ export default function AllGuitars() {
           </div>
 
           <div className="flex space-x-3">
-            <Link
-              href="/signin"
-              className="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800"
+            {/* Since this page is protected, user is always authenticated here */}
+            <button
+              onClick={() => signOut({ callbackUrl: '/' })} // Redirect to home after sign out
+              className="px-3 py-1 rounded-lg bg-gray-700 hover:bg-gray-800 text-white"
             >
-              Sign in
-            </Link>
-            <Link
-              href="/register"
-              className="px-3 py-1 rounded-lg bg-black text-white hover:bg-gray-900 !text-white"
-            >
-              Register
-            </Link>
+              Log out
+            </button>
           </div>
         </div>
       </nav>
@@ -598,5 +581,6 @@ export default function AllGuitars() {
         </div>
       </footer>
     </div>
+  </ProtectedPage>
   );
 };

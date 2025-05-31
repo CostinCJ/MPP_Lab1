@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getGuitars } from '../../../lib/services/GuitarService'; // Import filtered and sorted guitars function
-import { createGuitar } from '../../../lib/services/GuitarService'; // Import create guitar function
-import { getInitializedDataSource } from '@/lib/database/data-source'; // Import getInitializedDataSource
+import { getGuitars } from '../../../lib/services/GuitarService';
+import { createGuitar } from '../../../lib/services/GuitarService';
+import { getInitializedDataSource } from '@/lib/database/data-source'; 
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // GET - retrieve all guitars with optional filtering, sorting, and pagination
 export async function GET(request: NextRequest) {
     try {
+      const session = await getServerSession(authOptions);
+
+      if (!session || !session.user || !session.user.id) {
+        return NextResponse.json({ data: [], meta: { totalGuitars: 0, totalPages: 0, page: 1, limit: 10 } }, { status: 200 }); // Or 401
+      }
+      const userId = session.user.id;
+
       await getInitializedDataSource(); // Ensure data source is initialized
       const { searchParams } = new URL(request.url);
 
@@ -50,7 +59,10 @@ export async function GET(request: NextRequest) {
         minPrice?: number;
         maxPrice?: number;
         search?: string; // Change type to string
+        userId?: string; // Add userId to filters
       } = {}; // Define a specific type for filters
+
+      filters.userId = userId; // Always filter by the logged-in user's ID
 
       if (type.length > 0) filters.type = type;
       if (manufacturer.length > 0) filters.brandName = manufacturer; // Map manufacturer to brandName
@@ -112,6 +124,13 @@ export async function GET(request: NextRequest) {
 // POST - create a new guitar
 export async function POST(request: NextRequest) {
     try {
+      const session = await getServerSession(authOptions);
+
+      if (!session || !session.user || !session.user.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const userId = session.user.id;
+
       await getInitializedDataSource(); // Ensure data source is initialized
       const guitarData = await request.json();
 
@@ -143,7 +162,8 @@ export async function POST(request: NextRequest) {
           strings: parseInt(guitarData.strings), // Ensure strings is a number
           condition: guitarData.condition,
           price: price, // Use the validated price number
-          imageUrl: guitarData.imageUrl // Include imageUrl
+          imageUrl: guitarData.imageUrl, // Include imageUrl
+          userId: userId // Associate with the logged-in user
       });
 
       return NextResponse.json(newGuitar, { status: 201 });
