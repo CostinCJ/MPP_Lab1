@@ -1,43 +1,42 @@
-StringTracker - Guitar Inventory System
+# StringTracker — Guitar Inventory System
 
-StringTracker is a Next.js web application designed for guitar players or small shops to manage their guitar inventory. It provides a solution for tracking, adding, updating, and deleting guitars in your collection.
+A **Next.js + TypeScript** web application for guitar players and small shops to manage their guitar inventory. Track, add, update, and delete guitars, filter across multiple attributes, and view price analytics — all in a clean, responsive UI.
 
-Features:
+## Features
 
-- Browse Guitar Inventory: View all guitars with filtering by manufacturer, type, condition, strings, and price
-- Add Guitars: Add new guitars to your inventory with detailed information
-- Update Guitars: Modify existing guitar details
-- Delete Guitars: Remove guitars from your inventory
-- Price Analytics: View price statistics and category highlights
+- **Browse inventory** — view all guitars with filtering by manufacturer, type, condition, strings, and price
+- **Full CRUD** — add, update, and delete guitars with detailed information
+- **Price analytics** — price statistics and category highlights across the collection
+- **Responsive UI** — built with React and modern Next.js
 
-Getting Started
+## Tech stack
 
-Prerequisites:
+`Next.js` · `React` · `TypeScript` · `Node.js`
 
+## Getting started
+
+### Prerequisites
 - Node.js 18.17.0 or later
-- npm or yarn package manager
+- npm or yarn
 
-Installation:
+### Installation
 
-1. Clone the repository:
+```bash
 git clone https://github.com/CostinCJ/MPP_Lab1.git
 cd MPP_Lab1
-
-2. Install dependencies:
 npm install
-or
-yarn install
+```
 
-Running the Application:
+### Run the app
 
+```bash
 npm run dev
-or
-yarn dev
+```
 
-Open http://localhost:3000 in your browser to see the application.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Running Tests:
+### Run tests
 
+```bash
 npm test
-or
-yarn test
+```
